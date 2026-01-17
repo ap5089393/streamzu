@@ -2,50 +2,70 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Dood Stream</title>
+<title>Filemoon Stream</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 body {
   background:#0f0f0f;
   color:#fff;
-  font-family:system-ui,sans-serif;
+  font-family:system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   margin:0;
 }
+
 .container {
   max-width:1000px;
   margin:auto;
   padding:16px;
 }
+
+h2, h3 {
+  margin-top:20px;
+}
+
 .player iframe {
   width:100%;
   height:420px;
   border-radius:12px;
+  background:#000;
 }
+
 .grid {
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
   gap:14px;
+  margin-top:12px;
 }
+
 .card {
   cursor:pointer;
 }
+
 .card img {
   width:100%;
   border-radius:10px;
+  background:#222;
 }
+
 .card p {
   font-size:14px;
   margin:6px 0 0;
+  line-height:1.3;
 }
 </style>
 </head>
+
 <body>
 
 <div class="container">
 
   <h2>🎬 Now Playing</h2>
   <div class="player">
-    <iframe id="player" allowfullscreen></iframe>
+    <iframe
+      id="player"
+      allowfullscreen
+      allow="autoplay; fullscreen">
+    </iframe>
   </div>
 
   <h3>📺 Video Lainnya</h3>
@@ -59,28 +79,39 @@ const player = document.getElementById("player");
 const list = document.getElementById("videos");
 
 fetch(API)
-.then(res => res.json())
-.then(data => {
-  const files = data.result.files;
-  if (!files.length) return;
+  .then(res => res.json())
+  .then(data => {
+    const files = data?.result?.files;
+    if (!files || !files.length) return;
 
-  // autoplay video pertama
-  player.src = files[0].download_url.replace('/d/','/e/');
+    // autoplay video pertama
+    player.src = `https://filemoon.sx/e/${files[0].file_code}`;
 
-  files.forEach(v => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img src="${v.single_img}">
-      <p>${v.title}</p>
-    `;
-    card.onclick = () => {
-      player.src = v.download_url.replace('/d/','/e/');
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-    list.appendChild(card);
+    files.forEach(v => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      // thumbnail fallback (Filemoon sering kosong)
+      const thumb = v.single_img && v.single_img.trim() !== ""
+        ? v.single_img
+        : "https://dummyimage.com/320x180/000/fff&text=Video";
+
+      card.innerHTML = `
+        <img src="${thumb}" loading="lazy">
+        <p>${v.title || "Untitled Video"}</p>
+      `;
+
+      card.onclick = () => {
+        player.src = `https://filemoon.sx/e/${v.file_code}`;
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      };
+
+      list.appendChild(card);
+    });
+  })
+  .catch(err => {
+    console.error("Filemoon API error:", err);
   });
-});
 </script>
 
 </body>
