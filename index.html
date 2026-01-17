@@ -20,7 +20,7 @@ body {
 }
 
 h2, h3 {
-  margin-top:20px;
+  margin:20px 0 12px;
 }
 
 .player iframe {
@@ -28,13 +28,13 @@ h2, h3 {
   height:420px;
   border-radius:12px;
   background:#000;
+  border:0;
 }
 
 .grid {
   display:grid;
   grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
   gap:14px;
-  margin-top:12px;
 }
 
 .card {
@@ -81,17 +81,26 @@ const list = document.getElementById("videos");
 fetch(API)
   .then(res => res.json())
   .then(data => {
-    const files = data?.result?.files;
-    if (!files || !files.length) return;
+
+    // support berbagai bentuk JSON
+    const files =
+      data?.result?.files ||
+      data?.files ||
+      data?.result ||
+      [];
+
+    if (!files.length) {
+      console.warn("No videos found");
+      return;
+    }
 
     // autoplay video pertama
-    player.src = `https://filemoon.sx/e/${files[0].file_code}`;
+    player.src = `https://filemoon.to/e/${files[0].file_code}`;
 
     files.forEach(v => {
       const card = document.createElement("div");
       card.className = "card";
 
-      // thumbnail fallback (Filemoon sering kosong)
       const thumb = v.single_img && v.single_img.trim() !== ""
         ? v.single_img
         : "https://dummyimage.com/320x180/000/fff&text=Video";
@@ -102,7 +111,7 @@ fetch(API)
       `;
 
       card.onclick = () => {
-        player.src = `https://filemoon.sx/e/${v.file_code}`;
+        player.src = `https://filemoon.to/e/${v.file_code}`;
         window.scrollTo({ top: 0, behavior: "smooth" });
       };
 
@@ -110,7 +119,7 @@ fetch(API)
     });
   })
   .catch(err => {
-    console.error("Filemoon API error:", err);
+    console.error("API Error:", err);
   });
 </script>
 
