@@ -2,64 +2,156 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Filemoon Stream</title>
+<title>Streamzu – Nonton Video Filemoon</title>
+<meta name="description" content="Streamzu adalah platform streaming video Filemoon cepat, ringan, dan bebas iklan berlebihan.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
+:root {
+  --bg:#0b0b0f;
+  --card:#15151d;
+  --accent:#e50914;
+  --text:#ffffff;
+  --muted:#9a9aab;
+}
+
+* { box-sizing:border-box }
+
 body {
-  background:#0f0f0f;
-  color:#fff;
-  font-family:system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
 }
 
-.container {
-  max-width:1000px;
+/* ================= HEADER ================= */
+header {
+  background:#000;
+  padding:14px 20px;
+  border-bottom:1px solid #1f1f2a;
+}
+
+.header-inner {
+  max-width:1200px;
   margin:auto;
-  padding:16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 }
 
-h2, h3 {
-  margin:20px 0 12px;
+.logo {
+  font-size:22px;
+  font-weight:700;
+  color:var(--accent);
+  text-decoration:none;
+}
+
+.logo span {
+  color:#fff;
+}
+
+/* ================= LAYOUT ================= */
+.container {
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+}
+
+.player {
+  background:#000;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
 }
 
 .player iframe {
   width:100%;
-  height:420px;
-  border-radius:12px;
-  background:#000;
+  height:520px;
   border:0;
+  background:#000;
 }
 
+@media(max-width:768px){
+  .player iframe { height:240px }
+}
+
+/* ================= SECTION ================= */
+.section-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:28px 0 16px;
+}
+
+.section-title h3 {
+  margin:0;
+  font-size:18px;
+}
+
+.section-title span {
+  font-size:13px;
+  color:var(--muted);
+}
+
+/* ================= GRID ================= */
 .grid {
   display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(180px,1fr));
-  gap:14px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;
 }
 
 .card {
+  background:var(--card);
+  border-radius:14px;
+  overflow:hidden;
   cursor:pointer;
+  transition:.25s ease;
+}
+
+.card:hover {
+  transform:translateY(-6px);
+  box-shadow:0 12px 30px rgba(0,0,0,.4);
 }
 
 .card img {
   width:100%;
-  border-radius:10px;
+  aspect-ratio:16/9;
+  object-fit:cover;
   background:#222;
 }
 
-.card p {
+.card-content {
+  padding:10px 12px;
+}
+
+.card-content p {
+  margin:0;
   font-size:14px;
-  margin:6px 0 0;
   line-height:1.3;
+}
+
+/* ================= FOOTER ================= */
+footer {
+  margin-top:40px;
+  padding:20px;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
 }
 </style>
 </head>
 
 <body>
 
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">Stream<span>zu</span></a>
+    <span style="font-size:13px;color:#aaa;">Filemoon Streaming</span>
+  </div>
+</header>
+
 <div class="container">
 
-  <h2>🎬 Now Playing</h2>
   <div class="player">
     <iframe
       id="player"
@@ -68,92 +160,57 @@ h2, h3 {
     </iframe>
   </div>
 
-  <h3>📺 Video Lainnya</h3>
+  <div class="section-title">
+    <h3>📺 Video Lainnya</h3>
+    <span>Klik untuk memutar</span>
+  </div>
+
   <div id="videos" class="grid"></div>
 
 </div>
+
+<footer>
+  © 2026 Streamzu · Powered by Filemoon
+</footer>
 
 <script>
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
 const player = document.getElementById("player");
 const list = document.getElementById("videos");
-
 let FILES = [];
 
-/* =========================
-   HELPER
-========================= */
-function playVideo(code, title = "Filemoon Stream") {
+function playVideo(code, title="Streamzu") {
   if (!code) return;
   player.src = `https://filemoon.to/e/${code}`;
-  document.title = title;
+  document.title = title + " – Streamzu";
   location.hash = `/e/${code}`;
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/* =========================
-   LOAD API
-========================= */
 fetch(API)
-  .then(res => res.json())
+  .then(r => r.json())
   .then(data => {
+    FILES = data?.result?.files || [];
 
-    FILES =
-      data?.result?.files ||
-      data?.files ||
-      data?.result ||
-      [];
+    if (!FILES.length) return;
 
-    if (!FILES.length) {
-      console.warn("No videos found");
-      return;
-    }
-
-    // render list
     FILES.forEach(v => {
       const card = document.createElement("div");
       card.className = "card";
-
-      const thumb = v.single_img && v.single_img.trim() !== ""
-        ? v.single_img
-        : "https://dummyimage.com/320x180/000/fff&text=Video";
-
       card.innerHTML = `
-        <img src="${thumb}" loading="lazy">
-        <p>${v.title || "Untitled Video"}</p>
+        <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
+        <div class="card-content">
+          <p>${v.title || "Untitled Video"}</p>
+        </div>
       `;
-
       card.onclick = () => playVideo(v.file_code, v.title);
-
       list.appendChild(card);
     });
 
-    // autoplay from hash OR first video
-    const hash = location.hash;
-    const match = hash.match(/\/e\/([a-zA-Z0-9]+)/);
-
-    if (match) {
-      const code = match[1];
-      playVideo(code);
-    } else {
-      playVideo(FILES[0].file_code, FILES[0].title);
-    }
-  })
-  .catch(err => {
-    console.error("API Error:", err);
+    const hash = location.hash.match(/\/e\/([\w]+)/);
+    if (hash) playVideo(hash[1]);
+    else playVideo(FILES[0].file_code, FILES[0].title);
   });
-
-/* =========================
-   HANDLE BACK / FORWARD
-========================= */
-window.addEventListener("hashchange", () => {
-  const match = location.hash.match(/\/e\/([a-zA-Z0-9]+)/);
-  if (!match) return;
-
-  const code = match[1];
-  const video = FILES.find(v => v.file_code === code);
-  playVideo(code, video?.title || "Filemoon Stream");
-});
 </script>
 
 </body>
