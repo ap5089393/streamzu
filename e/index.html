@@ -2,49 +2,90 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streaming – Streamzu</title>
+<title>Stream – Streamzu</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Halaman streaming video Filemoon di Streamzu">
 
 <style>
-body{margin:0;background:#0b0b0f;color:#fff;font-family:system-ui}
-.container{max-width:1000px;margin:auto;padding:20px}
-.player iframe{width:100%;height:520px;border:0;border-radius:14px;background:#000}
-a{color:#e50914;text-decoration:none}
+body{
+  margin:0;
+  background:#0b0b0f;
+  color:#fff;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.container{
+  max-width:1000px;
+  margin:auto;
+  padding:20px;
+}
+a{
+  color:#e50914;
+  text-decoration:none;
+}
+.player iframe{
+  width:100%;
+  height:520px;
+  border:0;
+  border-radius:16px;
+  background:#000;
+}
+.message{
+  background:#15151d;
+  border-radius:16px;
+  padding:40px 20px;
+  text-align:center;
+}
+.message h2{
+  margin:0 0 10px;
+}
+.message p{
+  color:#aaa;
+  margin-bottom:20px;
+}
 </style>
 </head>
 
 <body>
 <div class="container">
-  <a href="/">⬅ Kembali ke beranda</a>
-  <h2 id="title">🎬 Streaming</h2>
 
-  <div class="player">
-    <iframe
-      id="player"
-      allowfullscreen
-      allow="autoplay; fullscreen">
-    </iframe>
-  </div>
+  <a href="/">⬅ Kembali ke beranda</a>
+
+  <div id="content"></div>
+
 </div>
 
 <script>
-/* =========================
-   AMBIL FILE CODE DARI URL
-========================= */
+const content = document.getElementById("content");
 const path = window.location.pathname;
 
-// contoh: /e/fic7tfl72o1n
+// ambil code dari /e/xxxxx
 const match = path.match(/\/e\/([^\/]+)/);
 
 if (!match || !match[1]) {
-  document.getElementById("title").innerText = "❌ Video tidak ditemukan";
+  // ====== KASUS /e/ ======
+  content.innerHTML = `
+    <div class="message">
+      <h2>🎬 Streamzu</h2>
+      <p>Silakan pilih video dari halaman utama untuk mulai menonton.</p>
+      <a href="/">Kembali ke Beranda</a>
+    </div>
+  `;
 } else {
+  // ====== KASUS /e/xxxx ======
   const code = match[1];
 
-  document.getElementById("player").src =
-    `https://filemoon.to/e/${code}`;
+  document.title = "Streaming – Streamzu";
 
-  document.title = "Streaming " + code + " – Streamzu";
+  content.innerHTML = `
+    <h2>🎬 Sedang Diputar</h2>
+    <div class="player">
+      <iframe
+        src="https://filemoon.to/e/${code}"
+        allowfullscreen
+        allow="autoplay; fullscreen">
+      </iframe>
+    </div>
+  `;
 }
 </script>
 
