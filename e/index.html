@@ -2,8 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streaming Video – Streamzu</title>
-<meta name="description" content="Tonton video Filemoon secara online di Streamzu">
+<title>Streaming – Streamzu</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -20,20 +19,34 @@ a{color:#e50914;text-decoration:none}
   <h2 id="title">🎬 Streaming</h2>
 
   <div class="player">
-    <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
+    <iframe
+      id="player"
+      allowfullscreen
+      allow="autoplay; fullscreen">
+    </iframe>
   </div>
 </div>
 
 <script>
+/* =========================
+   AMBIL FILE CODE DARI URL
+========================= */
 const path = window.location.pathname;
-const code = path.split("/").pop();
 
-if(!code || code==="index.html"){
+// contoh: /e/fic7tfl72o1n
+const match = path.match(/\/e\/([^\/]+)/);
+
+if (!match || !match[1]) {
   document.getElementById("title").innerText = "❌ Video tidak ditemukan";
-}else{
-  document.getElementById("player").src = `https://filemoon.to/e/${code}`;
+} else {
+  const code = match[1];
+
+  document.getElementById("player").src =
+    `https://filemoon.to/e/${code}`;
+
   document.title = "Streaming " + code + " – Streamzu";
 }
 </script>
+
 </body>
 </html>
