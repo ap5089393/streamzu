@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streaming Video - Streamzu</title>
+<title>Streamzu - Streaming Video</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -20,9 +20,9 @@ body{
 .player{
   position:relative;
   padding-top:56.25%;
+  background:#000;
   border-radius:16px;
   overflow:hidden;
-  background:#000;
 }
 .player iframe{
   position:absolute;
@@ -31,15 +31,16 @@ body{
   height:100%;
   border:0;
 }
+.msg{
+  margin-top:20px;
+  font-size:18px;
+  color:#ff6b6b;
+}
 .back{
   display:inline-block;
   margin:15px 0;
   color:#4da3ff;
   text-decoration:none;
-}
-.error{
-  color:#ff6b6b;
-  font-size:18px;
 }
 </style>
 </head>
@@ -53,28 +54,36 @@ body{
     <iframe id="player" allowfullscreen allow="autoplay"></iframe>
   </div>
 
-  <div id="error" class="error"></div>
+  <div id="msg" class="msg"></div>
 
 </div>
 
 <script>
-(function(){
-  // ambil path bersih
-  const path = location.pathname.replace(/\/+$/, "");
-  const parts = path.split("/");
-  const code = parts.length >= 3 ? parts[2] : "";
+(function () {
+  const msg = document.getElementById("msg");
+  const iframe = document.getElementById("player");
 
-  if(!code){
-    document.getElementById("error").innerText = "Video tidak ditemukan";
+  // ambil path penuh
+  const path = window.location.pathname;
+
+  // regex: /e/VIDEOID
+  const match = path.match(/^\/e\/([^\/\?\#]+)/);
+
+  if (!match || !match[1]) {
+    msg.innerText = "Video tidak ditemukan atau URL salah";
+    console.error("INVALID PATH:", path);
     return;
   }
 
-  // SEO title
-  document.title = "Streaming " + code + " - Streamzu";
+  const code = match[1];
 
-  // load player filemoon
-  document.getElementById("player").src =
-    "https://filemoon.to/e/" + code;
+  // SEO
+  document.title = "Streaming Video - Streamzu";
+
+  // set iframe
+  iframe.src = "https://filemoon.to/e/" + code;
+
+  console.log("PLAYING:", code);
 })();
 </script>
 
