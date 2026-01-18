@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Streaming Video - Streamzu</title>
-<meta name="robots" content="index,follow">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -38,6 +37,10 @@ body{
   color:#4da3ff;
   text-decoration:none;
 }
+.error{
+  color:#ff6b6b;
+  font-size:18px;
+}
 </style>
 </head>
 <body>
@@ -50,22 +53,29 @@ body{
     <iframe id="player" allowfullscreen allow="autoplay"></iframe>
   </div>
 
+  <div id="error" class="error"></div>
+
 </div>
 
 <script>
-const code = location.pathname.split("/").pop();
+(function(){
+  // ambil path bersih
+  const path = location.pathname.replace(/\/+$/, "");
+  const parts = path.split("/");
+  const code = parts.length >= 3 ? parts[2] : "";
 
-if(!code){
-  document.body.innerHTML = "<h2>Video tidak ditemukan</h2>";
-  throw new Error("No file code");
-}
+  if(!code){
+    document.getElementById("error").innerText = "Video tidak ditemukan";
+    return;
+  }
 
-// set title SEO
-document.title = "Streaming Video " + code + " - Streamzu";
+  // SEO title
+  document.title = "Streaming " + code + " - Streamzu";
 
-// load player
-document.getElementById("player").src =
-  "https://filemoon.to/e/" + code;
+  // load player filemoon
+  document.getElementById("player").src =
+    "https://filemoon.to/e/" + code;
+})();
 </script>
 
 </body>
