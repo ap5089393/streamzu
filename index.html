@@ -2,50 +2,196 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streamzu – Streaming Video Filemoon</title>
-<meta name="description" content="Streamzu adalah website streaming video Filemoon cepat, ringan, dan responsive.">
+<title>Streamzu – Streaming Filemoon</title>
+<meta name="description" content="Streamzu adalah platform streaming video Filemoon cepat, ringan, dan mudah diakses.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body{margin:0;background:#0b0b0f;color:#fff;font-family:system-ui}
-.container{max-width:1200px;margin:auto;padding:20px}
-h1{color:#e50914}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
-.card{background:#15151d;border-radius:14px;overflow:hidden;cursor:pointer}
-.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
-.card p{padding:10px;font-size:14px;margin:0}
+:root{
+  --bg:#0b0b0f;
+  --card:#15151d;
+  --accent:#e50914;
+  --text:#fff;
+  --muted:#9a9aab;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+/* HEADER */
+header{
+  background:#000;
+  border-bottom:1px solid #1f1f2a;
+}
+.header-inner{
+  max-width:1200px;
+  margin:auto;
+  padding:14px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.logo{
+  font-size:22px;
+  font-weight:700;
+  color:var(--accent);
+  text-decoration:none;
+}
+.logo span{color:#fff}
+
+/* LAYOUT */
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:20px;
+}
+
+/* PLAYER */
+.player{
+  display:none;
+  background:#000;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
+  margin-bottom:30px;
+}
+.player iframe{
+  width:100%;
+  height:520px;
+  border:0;
+}
+@media(max-width:768px){
+  .player iframe{height:240px}
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;
+}
+.card{
+  background:var(--card);
+  border-radius:14px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:.25s;
+}
+.card:hover{
+  transform:translateY(-6px);
+  box-shadow:0 12px 30px rgba(0,0,0,.4);
+}
+.card img{
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:cover;
+}
+.card p{
+  margin:0;
+  padding:10px 12px;
+  font-size:14px;
+}
+
+/* FOOTER */
+footer{
+  text-align:center;
+  padding:20px;
+  color:var(--muted);
+  font-size:13px;
+}
 </style>
 </head>
 
 <body>
-<div class="container">
-  <h1>🎬 Streamzu</h1>
-  <p>Streaming video Filemoon tanpa ribet</p>
 
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">Stream<span>zu</span></a>
+    <span style="font-size:13px;color:#aaa">Filemoon Streaming</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- PLAYER -->
+  <div id="playerBox" class="player">
+    <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
+  </div>
+
+  <!-- LIST VIDEO -->
   <div id="videos" class="grid"></div>
+
 </div>
+
+<footer>
+  © 2026 Streamzu · Powered by Filemoon
+</footer>
 
 <script>
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
 const list = document.getElementById("videos");
+const playerBox = document.getElementById("playerBox");
+const player = document.getElementById("player");
 
+let FILES = [];
+
+/* =========================
+   PLAY VIDEO
+========================= */
+function playVideo(code, title="Streamzu"){
+  if(!code) return;
+  player.src = `https://filemoon.to/e/${code}`;
+  document.title = title + " – Streamzu";
+  playerBox.style.display = "block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* =========================
+   ROUTER (HASH)
+========================= */
+function handleRoute(){
+  const match = location.hash.match(/#\/e\/([\w]+)/);
+  if(!match) return;
+
+  const code = match[1];
+  const video = FILES.find(v=>v.file_code===code);
+  playVideo(code, video?.title || "Streamzu");
+}
+
+/* =========================
+   LOAD API
+========================= */
 fetch(API)
 .then(r=>r.json())
 .then(data=>{
-  const files = data?.result?.files || [];
-  files.forEach(v=>{
+  FILES = data?.result?.files || [];
+  if(!FILES.length) return;
+
+  FILES.forEach(v=>{
     const card = document.createElement("div");
-    card.className="card";
-    card.innerHTML=`
-      <img src="${v.single_img}">
-      <p>${v.title}</p>
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
+      <p>${v.title || "Untitled Video"}</p>
     `;
-    card.onclick = () => {
-      window.location.href = `/e/${v.file_code}`;
+    card.onclick = ()=>{
+      location.hash = `/e/${v.file_code}`;
     };
     list.appendChild(card);
   });
+
+  // autoplay jika buka dari URL share
+  handleRoute();
 });
+
+window.addEventListener("hashchange", handleRoute);
 </script>
+
 </body>
 </html>
