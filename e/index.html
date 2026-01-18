@@ -2,14 +2,14 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streaming Video</title>
+<title>Streamzu – Streaming Video</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 body {
   margin:0;
   background:#000;
   color:#fff;
-  font-family:system-ui;
+  font-family:system-ui, sans-serif;
 }
 .wrapper {
   max-width:1000px;
@@ -19,31 +19,52 @@ body {
 iframe {
   width:100%;
   height:480px;
-  border-radius:12px;
   border:0;
+  border-radius:14px;
+  background:#000;
+}
+.message {
+  text-align:center;
+  padding:80px 20px;
+  color:#aaa;
+}
+a {
+  color:#4da3ff;
+  text-decoration:none;
 }
 </style>
 </head>
 <body>
 
 <div class="wrapper">
-  <h2>Now Playing</h2>
-  <iframe id="player" allowfullscreen></iframe>
+  <div id="content"></div>
 </div>
 
 <script>
-const parts = location.pathname.split("/");
-const fileCode = parts[parts.length - 1];
+const parts = location.pathname.split("/").filter(Boolean);
+const last = parts[parts.length - 1];
+const content = document.getElementById("content");
 
-if (!fileCode || fileCode === "index.html") {
-  document.body.innerHTML = "<h2>❌ Video tidak ditemukan</h2>";
-  throw new Error("NO FILE CODE");
+// Jika buka /e/ atau /e/index.html
+if (!last || last === "e" || last === "index.html") {
+  content.innerHTML = `
+    <div class="message">
+      <h2>🎬 Streamzu</h2>
+      <p>Silakan pilih video dari halaman utama.</p>
+      <p><a href="/">⬅ Kembali ke beranda</a></p>
+    </div>
+  `;
+} else {
+  // URL /e/FILECODE
+  content.innerHTML = `
+    <h2>Now Playing</h2>
+    <iframe 
+      src="https://filemoon.to/e/${last}" 
+      allowfullscreen 
+      allow="autoplay"
+    ></iframe>
+  `;
 }
-
-console.log("PLAYING:", fileCode);
-
-document.getElementById("player").src =
-  "https://filemoon.to/e/" + fileCode;
 </script>
 
 </body>
