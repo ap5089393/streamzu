@@ -2,89 +2,48 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streamzu - Streaming Video</title>
+<title>Streaming Video</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <style>
-body{
+body {
   margin:0;
-  background:#0b0b0b;
-  color:#fff;
-  font-family:system-ui,sans-serif;
-}
-.container{
-  max-width:1100px;
-  margin:auto;
-  padding:16px;
-}
-.player{
-  position:relative;
-  padding-top:56.25%;
   background:#000;
-  border-radius:16px;
-  overflow:hidden;
+  color:#fff;
+  font-family:system-ui;
 }
-.player iframe{
-  position:absolute;
-  inset:0;
+.wrapper {
+  max-width:1000px;
+  margin:auto;
+  padding:20px;
+}
+iframe {
   width:100%;
-  height:100%;
+  height:480px;
+  border-radius:12px;
   border:0;
-}
-.msg{
-  margin-top:20px;
-  font-size:18px;
-  color:#ff6b6b;
-}
-.back{
-  display:inline-block;
-  margin:15px 0;
-  color:#4da3ff;
-  text-decoration:none;
 }
 </style>
 </head>
 <body>
 
-<div class="container">
-
-  <a href="/" class="back">⬅ Kembali ke Beranda</a>
-
-  <div class="player">
-    <iframe id="player" allowfullscreen allow="autoplay"></iframe>
-  </div>
-
-  <div id="msg" class="msg"></div>
-
+<div class="wrapper">
+  <h2>Now Playing</h2>
+  <iframe id="player" allowfullscreen></iframe>
 </div>
 
 <script>
-(function () {
-  const msg = document.getElementById("msg");
-  const iframe = document.getElementById("player");
+const parts = location.pathname.split("/");
+const fileCode = parts[parts.length - 1];
 
-  // ambil path penuh
-  const path = window.location.pathname;
+if (!fileCode || fileCode === "index.html") {
+  document.body.innerHTML = "<h2>❌ Video tidak ditemukan</h2>";
+  throw new Error("NO FILE CODE");
+}
 
-  // regex: /e/VIDEOID
-  const match = path.match(/^\/e\/([^\/\?\#]+)/);
+console.log("PLAYING:", fileCode);
 
-  if (!match || !match[1]) {
-    msg.innerText = "Video tidak ditemukan atau URL salah";
-    console.error("INVALID PATH:", path);
-    return;
-  }
-
-  const code = match[1];
-
-  // SEO
-  document.title = "Streaming Video - Streamzu";
-
-  // set iframe
-  iframe.src = "https://filemoon.to/e/" + code;
-
-  console.log("PLAYING:", code);
-})();
+document.getElementById("player").src =
+  "https://filemoon.to/e/" + fileCode;
 </script>
 
 </body>
