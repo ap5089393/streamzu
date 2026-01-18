@@ -2,216 +2,50 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streamzu – Nonton Video Filemoon</title>
-<meta name="description" content="Streamzu adalah platform streaming video Filemoon cepat, ringan, dan bebas iklan berlebihan.">
+<title>Streamzu – Streaming Video Filemoon</title>
+<meta name="description" content="Streamzu adalah website streaming video Filemoon cepat, ringan, dan responsive.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root {
-  --bg:#0b0b0f;
-  --card:#15151d;
-  --accent:#e50914;
-  --text:#ffffff;
-  --muted:#9a9aab;
-}
-
-* { box-sizing:border-box }
-
-body {
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-}
-
-/* ================= HEADER ================= */
-header {
-  background:#000;
-  padding:14px 20px;
-  border-bottom:1px solid #1f1f2a;
-}
-
-.header-inner {
-  max-width:1200px;
-  margin:auto;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-}
-
-.logo {
-  font-size:22px;
-  font-weight:700;
-  color:var(--accent);
-  text-decoration:none;
-}
-
-.logo span {
-  color:#fff;
-}
-
-/* ================= LAYOUT ================= */
-.container {
-  max-width:1200px;
-  margin:auto;
-  padding:20px;
-}
-
-.player {
-  background:#000;
-  border-radius:16px;
-  overflow:hidden;
-  box-shadow:0 20px 40px rgba(0,0,0,.5);
-}
-
-.player iframe {
-  width:100%;
-  height:520px;
-  border:0;
-  background:#000;
-}
-
-@media(max-width:768px){
-  .player iframe { height:240px }
-}
-
-/* ================= SECTION ================= */
-.section-title {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin:28px 0 16px;
-}
-
-.section-title h3 {
-  margin:0;
-  font-size:18px;
-}
-
-.section-title span {
-  font-size:13px;
-  color:var(--muted);
-}
-
-/* ================= GRID ================= */
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:16px;
-}
-
-.card {
-  background:var(--card);
-  border-radius:14px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:.25s ease;
-}
-
-.card:hover {
-  transform:translateY(-6px);
-  box-shadow:0 12px 30px rgba(0,0,0,.4);
-}
-
-.card img {
-  width:100%;
-  aspect-ratio:16/9;
-  object-fit:cover;
-  background:#222;
-}
-
-.card-content {
-  padding:10px 12px;
-}
-
-.card-content p {
-  margin:0;
-  font-size:14px;
-  line-height:1.3;
-}
-
-/* ================= FOOTER ================= */
-footer {
-  margin-top:40px;
-  padding:20px;
-  text-align:center;
-  color:var(--muted);
-  font-size:13px;
-}
+body{margin:0;background:#0b0b0f;color:#fff;font-family:system-ui}
+.container{max-width:1200px;margin:auto;padding:20px}
+h1{color:#e50914}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+.card{background:#15151d;border-radius:14px;overflow:hidden;cursor:pointer}
+.card img{width:100%;aspect-ratio:16/9;object-fit:cover}
+.card p{padding:10px;font-size:14px;margin:0}
 </style>
 </head>
 
 <body>
-
-<header>
-  <div class="header-inner">
-    <a href="/" class="logo">Stream<span>zu</span></a>
-    <span style="font-size:13px;color:#aaa;">Filemoon Streaming</span>
-  </div>
-</header>
-
 <div class="container">
-
-  <div class="player">
-    <iframe
-      id="player"
-      allowfullscreen
-      allow="autoplay; fullscreen">
-    </iframe>
-  </div>
-
-  <div class="section-title">
-    <h3>📺 Video Lainnya</h3>
-    <span>Klik untuk memutar</span>
-  </div>
+  <h1>🎬 Streamzu</h1>
+  <p>Streaming video Filemoon tanpa ribet</p>
 
   <div id="videos" class="grid"></div>
-
 </div>
-
-<footer>
-  © 2026 Streamzu · Powered by Filemoon
-</footer>
 
 <script>
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
-const player = document.getElementById("player");
 const list = document.getElementById("videos");
-let FILES = [];
-
-function playVideo(code, title="Streamzu") {
-  if (!code) return;
-  player.src = `https://filemoon.to/e/${code}`;
-  document.title = title + " – Streamzu";
-  location.hash = `/e/${code}`;
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
 
 fetch(API)
-  .then(r => r.json())
-  .then(data => {
-    FILES = data?.result?.files || [];
-
-    if (!FILES.length) return;
-
-    FILES.forEach(v => {
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
-        <div class="card-content">
-          <p>${v.title || "Untitled Video"}</p>
-        </div>
-      `;
-      card.onclick = () => playVideo(v.file_code, v.title);
-      list.appendChild(card);
-    });
-
-    const hash = location.hash.match(/\/e\/([\w]+)/);
-    if (hash) playVideo(hash[1]);
-    else playVideo(FILES[0].file_code, FILES[0].title);
+.then(r=>r.json())
+.then(data=>{
+  const files = data?.result?.files || [];
+  files.forEach(v=>{
+    const card = document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <img src="${v.single_img}">
+      <p>${v.title}</p>
+    `;
+    card.onclick = () => {
+      window.location.href = `/e/${v.file_code}`;
+    };
+    list.appendChild(card);
   });
+});
 </script>
-
 </body>
 </html>
