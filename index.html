@@ -2,112 +2,17 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>Streamzu - Streaming Video Gratis</title>
-<meta name="description" content="Streaming video gratis, cepat dan mobile friendly">
+<title>Streamzu</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body{
-  margin:0;
-  background:#0e0e0e;
-  color:#fff;
-  font-family:system-ui,sans-serif;
-}
-header{
-  text-align:center;
-  padding:30px 15px;
-}
-header h1{
-  margin:0;
-  font-size:28px;
-}
-header p{
-  color:#aaa;
-}
-.container{
-  max-width:1100px;
-  margin:auto;
-  padding:20px;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
-  gap:16px;
-}
-.card{
-  background:#151515;
-  border-radius:12px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:.2s;
-}
-.card:hover{
-  transform:translateY(-4px);
-}
-.card img{
-  width:100%;
-  aspect-ratio:16/9;
-  object-fit:cover;
-}
-.card .info{
-  padding:10px;
-}
-.card h3{
-  font-size:14px;
-  margin:0;
-}
-.card span{
-  font-size:12px;
-  color:#aaa;
-}
-footer{
-  text-align:center;
-  padding:30px;
-  font-size:13px;
-  color:#777;
-}
-</style>
 </head>
 <body>
 
-<header>
-  <h1>🎬 Streamzu</h1>
-  <p>Streaming video gratis, cepat & mobile friendly</p>
-</header>
+<h2>Video Terbaru</h2>
 
-<div class="container">
-  <div id="videos" class="grid"></div>
+<div class="card">
+  <h3>Ne-Yo - One In A Million</h3>
+  <a href="/e/fic7tfl72o1n">▶ Tonton Sekarang</a>
 </div>
-
-<footer>
-  © 2026 Streamzu · All rights reserved
-</footer>
-
-<script>
-const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
-const list = document.getElementById("videos");
-
-fetch(API)
-.then(r => r.json())
-.then(data => {
-  const files = data.result.files;
-  files.forEach(v => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img src="${v.single_img}" loading="lazy">
-      <div class="info">
-        <h3>${v.title}</h3>
-        <span>▶ Tonton sekarang</span>
-      </div>
-    `;
-    card.onclick = () => {
-      location.href = "/e/" + v.file_code;
-    };
-    list.appendChild(card);
-  });
-});
-</script>
 
 </body>
 </html>
