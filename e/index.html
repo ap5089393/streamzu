@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Streaming Video – Streamzu</title>
+<meta name="description" content="Tonton video Filemoon secara online di Streamzu">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{margin:0;background:#0b0b0f;color:#fff;font-family:system-ui}
+.container{max-width:1000px;margin:auto;padding:20px}
+.player iframe{width:100%;height:520px;border:0;border-radius:14px;background:#000}
+a{color:#e50914;text-decoration:none}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <a href="/">⬅ Kembali ke beranda</a>
+  <h2 id="title">🎬 Streaming</h2>
+
+  <div class="player">
+    <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
+  </div>
+</div>
+
+<script>
+const path = window.location.pathname;
+const code = path.split("/").pop();
+
+if(!code || code==="index.html"){
+  document.getElementById("title").innerText = "❌ Video tidak ditemukan";
+}else{
+  document.getElementById("player").src = `https://filemoon.to/e/${code}`;
+  document.title = "Streaming " + code + " – Streamzu";
+}
+</script>
+</body>
+</html>
