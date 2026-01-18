@@ -2,106 +2,72 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-
-<title>Streamzu – Streaming Video Gratis & Cepat</title>
-<meta name="description" content="Nonton video streaming gratis dengan kualitas tinggi. Streaming cepat, ringan, dan mobile friendly.">
+<title>Streamzu - Streaming Video Gratis</title>
+<meta name="description" content="Streaming video gratis, cepat dan mobile friendly">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-:root {
-  --bg:#0f0f0f;
-  --card:#1a1a1a;
-  --text:#fff;
-  --muted:#aaa;
-  --accent:#e50914;
-}
-
-body {
+body{
   margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#0e0e0e;
+  color:#fff;
+  font-family:system-ui,sans-serif;
 }
-
-/* ===== HEADER ===== */
-header {
-  padding:20px;
+header{
   text-align:center;
+  padding:30px 15px;
 }
-
-header h1 {
+header h1{
   margin:0;
   font-size:28px;
 }
-
-header p {
-  margin:8px 0 0;
-  color:var(--muted);
-  font-size:14px;
+header p{
+  color:#aaa;
 }
-
-/* ===== CONTAINER ===== */
-.container {
-  max-width:1200px;
+.container{
+  max-width:1100px;
   margin:auto;
-  padding:16px;
+  padding:20px;
 }
-
-/* ===== GRID ===== */
-.grid {
+.grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
   gap:16px;
 }
-
-/* ===== CARD ===== */
-.card {
-  background:var(--card);
+.card{
+  background:#151515;
   border-radius:12px;
   overflow:hidden;
   cursor:pointer;
-  transition:transform .15s ease, box-shadow .15s ease;
+  transition:.2s;
 }
-
-.card:hover {
+.card:hover{
   transform:translateY(-4px);
-  box-shadow:0 8px 20px rgba(0,0,0,.4);
 }
-
-.card img {
+.card img{
   width:100%;
   aspect-ratio:16/9;
   object-fit:cover;
-  background:#000;
 }
-
-.card .info {
+.card .info{
   padding:10px;
 }
-
-.card h3 {
+.card h3{
   font-size:14px;
   margin:0;
-  line-height:1.3;
 }
-
-.card span {
-  display:block;
-  margin-top:6px;
+.card span{
   font-size:12px;
-  color:var(--muted);
+  color:#aaa;
 }
-
-/* ===== FOOTER ===== */
-footer {
+footer{
   text-align:center;
-  padding:20px;
-  font-size:12px;
-  color:var(--muted);
+  padding:30px;
+  font-size:13px;
+  color:#777;
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -109,51 +75,38 @@ footer {
   <p>Streaming video gratis, cepat & mobile friendly</p>
 </header>
 
-<main class="container">
-  <section class="grid" id="videos"></section>
-</main>
+<div class="container">
+  <div id="videos" class="grid"></div>
+</div>
 
 <footer>
-  © 2026 Streamzu • All rights reserved
+  © 2026 Streamzu · All rights reserved
 </footer>
 
 <script>
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
-const grid = document.getElementById("videos");
+const list = document.getElementById("videos");
 
 fetch(API)
-  .then(res => res.json())
-  .then(data => {
-    const files =
-      data?.result?.files ||
-      data?.files ||
-      data?.result ||
-      [];
-
-    files.forEach(v => {
-      const card = document.createElement("div");
-      card.className = "card";
-
-      const thumb = v.single_img && v.single_img.trim() !== ""
-        ? v.single_img
-        : "https://dummyimage.com/480x270/000/fff&text=Video";
-
-      card.innerHTML = `
-        <img src="${thumb}" loading="lazy" alt="${v.title}">
-        <div class="info">
-          <h3>${v.title || "Untitled Video"}</h3>
-          <span>▶️ Tonton sekarang</span>
-        </div>
-      `;
-
-      card.onclick = () => {
-        location.href = `/e/${v.file_code}`;
-      };
-
-      grid.appendChild(card);
-    });
-  })
-  .catch(err => console.error(err));
+.then(r => r.json())
+.then(data => {
+  const files = data.result.files;
+  files.forEach(v => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${v.single_img}" loading="lazy">
+      <div class="info">
+        <h3>${v.title}</h3>
+        <span>▶ Tonton sekarang</span>
+      </div>
+    `;
+    card.onclick = () => {
+      location.href = "/e/" + v.file_code;
+    };
+    list.appendChild(card);
+  });
+});
 </script>
 
 </body>
