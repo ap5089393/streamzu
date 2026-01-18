@@ -78,26 +78,39 @@ const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
 const player = document.getElementById("player");
 const list = document.getElementById("videos");
 
+let FILES = [];
+
+/* =========================
+   HELPER
+========================= */
+function playVideo(code, title = "Filemoon Stream") {
+  if (!code) return;
+  player.src = `https://filemoon.to/e/${code}`;
+  document.title = title;
+  location.hash = `/e/${code}`;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* =========================
+   LOAD API
+========================= */
 fetch(API)
   .then(res => res.json())
   .then(data => {
 
-    // support berbagai bentuk JSON
-    const files =
+    FILES =
       data?.result?.files ||
       data?.files ||
       data?.result ||
       [];
 
-    if (!files.length) {
+    if (!FILES.length) {
       console.warn("No videos found");
       return;
     }
 
-    // autoplay video pertama
-    player.src = `https://filemoon.to/e/${files[0].file_code}`;
-
-    files.forEach(v => {
+    // render list
+    FILES.forEach(v => {
       const card = document.createElement("div");
       card.className = "card";
 
@@ -110,17 +123,37 @@ fetch(API)
         <p>${v.title || "Untitled Video"}</p>
       `;
 
-      card.onclick = () => {
-        player.src = `https://filemoon.to/e/${v.file_code}`;
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      };
+      card.onclick = () => playVideo(v.file_code, v.title);
 
       list.appendChild(card);
     });
+
+    // autoplay from hash OR first video
+    const hash = location.hash;
+    const match = hash.match(/\/e\/([a-zA-Z0-9]+)/);
+
+    if (match) {
+      const code = match[1];
+      playVideo(code);
+    } else {
+      playVideo(FILES[0].file_code, FILES[0].title);
+    }
   })
   .catch(err => {
     console.error("API Error:", err);
   });
+
+/* =========================
+   HANDLE BACK / FORWARD
+========================= */
+window.addEventListener("hashchange", () => {
+  const match = location.hash.match(/\/e\/([a-zA-Z0-9]+)/);
+  if (!match) return;
+
+  const code = match[1];
+  const video = FILES.find(v => v.file_code === code);
+  playVideo(code, video?.title || "Filemoon Stream");
+});
 </script>
 
 </body>
