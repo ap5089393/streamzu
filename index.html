@@ -43,7 +43,6 @@ header{
   color:var(--accent);
   text-decoration:none;
 }
-.logo span{color:#fff}
 
 /* LAYOUT */
 .container{
@@ -98,6 +97,22 @@ header{
   font-size:14px;
 }
 
+/* PAGINATION */
+.pagination{
+  margin:30px 0;
+  text-align:center;
+}
+.pagination a{
+  color:#fff;
+  text-decoration:none;
+  padding:10px 16px;
+  border-radius:8px;
+  background:#1f1f2a;
+}
+.pagination a:hover{
+  background:var(--accent);
+}
+
 /* FOOTER */
 footer{
   text-align:center;
@@ -112,7 +127,7 @@ footer{
 
 <header>
   <div class="header-inner">
-    <a href="/" class="logo">Stream<span>zu</span></a>
+    <a href="/" class="logo">Streamzu</a>
     <span style="font-size:13px;color:#aaa">Filemoon Streaming</span>
   </div>
 </header>
@@ -124,8 +139,11 @@ footer{
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- LIST VIDEO -->
+  <!-- LIST -->
   <div id="videos" class="grid"></div>
+
+  <!-- PAGINATION -->
+  <div id="pagination" class="pagination"></div>
 
 </div>
 
@@ -136,15 +154,19 @@ footer{
 <script>
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
 const list = document.getElementById("videos");
+const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
 const player = document.getElementById("player");
 
+const PER_PAGE = 2;
 let FILES = [];
 
-/* =========================
-   PLAY VIDEO
-========================= */
-function playVideo(code, title="Streamzu"){
+/* ===== URL PARAM ===== */
+const params = new URLSearchParams(location.search);
+const PAGE = parseInt(params.get("page") || "1");
+
+/* ===== PLAY VIDEO ===== */
+function playVideo(code,title="Streamzu"){
   if(!code) return;
   player.src = `https://filemoon.to/e/${code}`;
   document.title = title + " – Streamzu";
@@ -152,41 +174,43 @@ function playVideo(code, title="Streamzu"){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* =========================
-   ROUTER (HASH)
-========================= */
+/* ===== ROUTER HASH ===== */
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
   if(!match) return;
-
   const code = match[1];
   const video = FILES.find(v=>v.file_code===code);
-  playVideo(code, video?.title || "Streamzu");
+  playVideo(code, video?.title);
 }
 
-/* =========================
-   LOAD API
-========================= */
+/* ===== LOAD API ===== */
 fetch(API)
 .then(r=>r.json())
 .then(data=>{
   FILES = data?.result?.files || [];
   if(!FILES.length) return;
 
-  FILES.forEach(v=>{
+  const start = (PAGE-1)*PER_PAGE;
+  const end = start + PER_PAGE;
+  const pageVideos = FILES.slice(start,end);
+
+  pageVideos.forEach(v=>{
     const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
+    card.className="card";
+    card.innerHTML=`
       <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
-      <p>${v.title || "Untitled Video"}</p>
+      <p>${v.title || 'Untitled Video'}</p>
     `;
-    card.onclick = ()=>{
-      location.hash = `/e/${v.file_code}`;
+    card.onclick=()=>{
+      location.hash=`/e/${v.file_code}`;
     };
     list.appendChild(card);
   });
 
-  // autoplay jika buka dari URL share
+  if(end < FILES.length){
+    pagination.innerHTML=`<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
+  }
+
   handleRoute();
 });
 
