@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Streamzu – Streaming Filemoon</title>
-<meta name="description" content="Streamzu adalah platform streaming video Filemoon cepat, ringan, dan mudah diakses.">
+<meta name="description" content="Nonton video Filemoon cepat, ringan, dan mudah diakses di Streamzu.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -43,6 +43,7 @@ header{
   color:var(--accent);
   text-decoration:none;
 }
+.logo span{color:#fff}
 
 /* LAYOUT */
 .container{
@@ -53,7 +54,6 @@ header{
 
 /* PLAYER */
 .player{
-  display:none;
   background:#000;
   border-radius:16px;
   overflow:hidden;
@@ -67,6 +67,12 @@ header{
 }
 @media(max-width:768px){
   .player iframe{height:240px}
+}
+
+/* SECTION */
+.section-title{
+  margin:20px 0 12px;
+  font-size:18px;
 }
 
 /* GRID */
@@ -97,22 +103,6 @@ header{
   font-size:14px;
 }
 
-/* PAGINATION */
-.pagination{
-  margin:30px 0;
-  text-align:center;
-}
-.pagination a{
-  color:#fff;
-  text-decoration:none;
-  padding:10px 16px;
-  border-radius:8px;
-  background:#1f1f2a;
-}
-.pagination a:hover{
-  background:var(--accent);
-}
-
 /* FOOTER */
 footer{
   text-align:center;
@@ -127,7 +117,7 @@ footer{
 
 <header>
   <div class="header-inner">
-    <a href="/" class="logo">Streamzu</a>
+    <a href="/" class="logo">Stream<span>zu</span></a>
     <span style="font-size:13px;color:#aaa">Filemoon Streaming</span>
   </div>
 </header>
@@ -135,15 +125,12 @@ footer{
 <div class="container">
 
   <!-- PLAYER -->
-  <div id="playerBox" class="player">
+  <div class="player">
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- VIDEO LIST -->
+  <div class="section-title">📺 Video Lainnya</div>
   <div id="videos" class="grid"></div>
-
-  <!-- PAGINATION -->
-  <div id="pagination" class="pagination"></div>
 
 </div>
 
@@ -154,73 +141,55 @@ footer{
 <script>
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
 const list = document.getElementById("videos");
-const pagination = document.getElementById("pagination");
-const playerBox = document.getElementById("playerBox");
 const player = document.getElementById("player");
 
-const PER_PAGE = 2;
 let FILES = [];
+const LIMIT = 10;
 
-// ambil page dari query
-const params = new URLSearchParams(location.search);
-const PAGE = parseInt(params.get("page") || "1");
-
-/* ================= PLAY VIDEO ================= */
+/* =========================
+   PLAY VIDEO
+========================= */
 function playVideo(code, title="Streamzu"){
   if(!code) return;
   player.src = `https://filemoon.to/e/${code}`;
   document.title = title + " – Streamzu";
-  playerBox.style.display = "block";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ================= ROUTER HASH ================= */
+/* =========================
+   ROUTER
+========================= */
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
   if(!match) return;
 
-  // bersihkan ?page= agar URL pendek
-  history.replaceState(
-    null,
-    "",
-    location.pathname + location.hash
-  );
-
   const code = match[1];
-  const video = FILES.find(v=>v.file_code===code);
-  playVideo(code, video?.title);
+  const video = FILES.find(v => v.file_code === code);
+  playVideo(code, video?.title || "Streamzu");
 }
 
-/* ================= LOAD API ================= */
+/* =========================
+   LOAD API
+========================= */
 fetch(API)
-.then(r=>r.json())
-.then(data=>{
+.then(r => r.json())
+.then(data => {
   FILES = data?.result?.files || [];
   if(!FILES.length) return;
 
-  const start = (PAGE - 1) * PER_PAGE;
-  const end = start + PER_PAGE;
-  const pageVideos = FILES.slice(start, end);
-
-  pageVideos.forEach(v=>{
+  // tampilkan hanya 10 video
+  FILES.slice(0, LIMIT).forEach(v => {
     const card = document.createElement("div");
     card.className = "card";
     card.innerHTML = `
       <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
       <p>${v.title || 'Untitled Video'}</p>
     `;
-    card.onclick = ()=>{
-      // hapus query page sebelum masuk stream
-      history.replaceState(null,"",location.pathname);
+    card.onclick = () => {
       location.hash = `/e/${v.file_code}`;
     };
     list.appendChild(card);
   });
-
-  if(end < FILES.length){
-    pagination.innerHTML =
-      `<a href="?page=${PAGE + 1}">Lihat video lainnya →</a>`;
-  }
 
   handleRoute();
 });
