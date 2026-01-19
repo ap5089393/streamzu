@@ -139,7 +139,7 @@ footer{
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- LIST -->
+  <!-- VIDEO LIST -->
   <div id="videos" class="grid"></div>
 
   <!-- PAGINATION -->
@@ -161,12 +161,12 @@ const player = document.getElementById("player");
 const PER_PAGE = 2;
 let FILES = [];
 
-/* ===== URL PARAM ===== */
+// ambil page dari query
 const params = new URLSearchParams(location.search);
 const PAGE = parseInt(params.get("page") || "1");
 
-/* ===== PLAY VIDEO ===== */
-function playVideo(code,title="Streamzu"){
+/* ================= PLAY VIDEO ================= */
+function playVideo(code, title="Streamzu"){
   if(!code) return;
   player.src = `https://filemoon.to/e/${code}`;
   document.title = title + " – Streamzu";
@@ -174,41 +174,52 @@ function playVideo(code,title="Streamzu"){
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ===== ROUTER HASH ===== */
+/* ================= ROUTER HASH ================= */
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
   if(!match) return;
+
+  // bersihkan ?page= agar URL pendek
+  history.replaceState(
+    null,
+    "",
+    location.pathname + location.hash
+  );
+
   const code = match[1];
   const video = FILES.find(v=>v.file_code===code);
   playVideo(code, video?.title);
 }
 
-/* ===== LOAD API ===== */
+/* ================= LOAD API ================= */
 fetch(API)
 .then(r=>r.json())
 .then(data=>{
   FILES = data?.result?.files || [];
   if(!FILES.length) return;
 
-  const start = (PAGE-1)*PER_PAGE;
+  const start = (PAGE - 1) * PER_PAGE;
   const end = start + PER_PAGE;
-  const pageVideos = FILES.slice(start,end);
+  const pageVideos = FILES.slice(start, end);
 
   pageVideos.forEach(v=>{
     const card = document.createElement("div");
-    card.className="card";
-    card.innerHTML=`
+    card.className = "card";
+    card.innerHTML = `
       <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
       <p>${v.title || 'Untitled Video'}</p>
     `;
-    card.onclick=()=>{
-      location.hash=`/e/${v.file_code}`;
+    card.onclick = ()=>{
+      // hapus query page sebelum masuk stream
+      history.replaceState(null,"",location.pathname);
+      location.hash = `/e/${v.file_code}`;
     };
     list.appendChild(card);
   });
 
   if(end < FILES.length){
-    pagination.innerHTML=`<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
+    pagination.innerHTML =
+      `<a href="?page=${PAGE + 1}">Lihat video lainnya →</a>`;
   }
 
   handleRoute();
