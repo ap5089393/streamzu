@@ -53,7 +53,7 @@ header{
 
 /* PLAYER */
 .player{
-  display:none;
+  display:none; /* default hidden, akan muncul saat user klik video */
   background:#000;
   border-radius:16px;
   overflow:hidden;
@@ -69,7 +69,7 @@ header{
   .player iframe{height:240px}
 }
 
-/* GRID */
+/* GRID VIDEO */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
@@ -97,7 +97,7 @@ header{
   font-size:14px;
 }
 
-/* PAGINATION */
+/* PAGINATION (hanya berlaku untuk halaman beranda) */
 .pagination{
   margin:30px 0;
   text-align:center;
@@ -134,15 +134,15 @@ footer{
 
 <div class="container">
 
-  <!-- PLAYER -->
+  <!-- PLAYER VIDEO -->
   <div id="playerBox" class="player">
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- VIDEO LIST -->
+  <!-- LIST VIDEO -->
   <div id="videos" class="grid"></div>
 
-  <!-- PAGINATION (hanya untuk beranda) -->
+  <!-- PAGINATION (beranda saja) -->
   <div id="pagination" class="pagination"></div>
 
 </div>
@@ -158,11 +158,15 @@ const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
 const player = document.getElementById("player");
 
+// ===== CONFIG =====
+// Jumlah video per halaman di beranda
 const HOME_PER_PAGE = 2;
+// Jumlah video rekomendasi acak di halaman stream
 const STREAM_RECOMMEND = 10;
+
 let FILES = [];
 
-// ambil page dari query untuk beranda
+// ambil page dari query string beranda (misal ?page=2)
 const params = new URLSearchParams(location.search);
 const PAGE = parseInt(params.get("page") || "1");
 
@@ -171,27 +175,29 @@ function playVideo(code, title="Streamzu"){
   if(!code) return;
   player.src = `https://filemoon.to/e/${code}`;
   document.title = title + " – Streamzu";
-  playerBox.style.display = "block";
+  playerBox.style.display = "block"; // tampilkan player saat video diputar
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
 /* ================= ROUTER HASH ================= */
+// fungsi untuk membaca hash URL dan autoplay video jika ada
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
   if(!match) return false;
+
   const code = match[1];
   const video = FILES.find(v=>v.file_code===code);
   playVideo(code, video?.title);
 
-  // bersihkan ?page= agar URL tetap bersih
+  // hapus query ?page agar URL tetap bersih saat buka video
   history.replaceState(null,"",location.pathname + location.hash);
   return true;
 }
 
 /* ================= RANDOM RECOMMENDATION ================= */
 function getRandomVideos(count){
-  const shuffled = FILES.slice().sort(()=>0.5 - Math.random());
-  return shuffled.slice(0, count);
+  const shuffled = FILES.slice().sort(()=>0.5 - Math.random()); // acak array
+  return shuffled.slice(0, count); // ambil sejumlah count
 }
 
 /* ================= LOAD API ================= */
@@ -201,11 +207,12 @@ fetch(API)
   FILES = data?.result?.files || [];
   if(!FILES.length) return;
 
-  // cek apakah buka dari hash stream
+  // cek apakah halaman stream (hash) atau beranda
   const isStream = handleRoute();
 
   if(isStream){
-    // halaman stream → 10 video rekomendasi acak
+    // ===== HALAMAN STREAM =====
+    // tampilkan 10 video rekomendasi acak
     const recommended = getRandomVideos(STREAM_RECOMMEND);
     recommended.forEach(v=>{
       const card = document.createElement("div");
@@ -215,12 +222,14 @@ fetch(API)
         <p>${v.title || 'Untitled Video'}</p>
       `;
       card.onclick = ()=>{
+        // ganti hash untuk autoplay video baru
         location.hash = `/e/${v.file_code}`;
       };
       list.appendChild(card);
     });
   } else {
-    // halaman beranda → slice sesuai page
+    // ===== HALAMAN BERANDA =====
+    // tampilkan 2 video per halaman
     const start = (PAGE-1) * HOME_PER_PAGE;
     const end = start + HOME_PER_PAGE;
     const pageVideos = FILES.slice(start, end);
@@ -233,17 +242,20 @@ fetch(API)
         <p>${v.title || 'Untitled Video'}</p>
       `;
       card.onclick = ()=>{
+        // ganti hash untuk buka halaman stream video
         location.hash = `/e/${v.file_code}`;
       };
       list.appendChild(card);
     });
 
+    // ===== PAGINATION HALAMAN BERANDA =====
     if(end < FILES.length){
       pagination.innerHTML = `<a href="?page=${PAGE + 1}">Lihat video lainnya →</a>`;
     }
   }
 });
 
+// jalankan handleRoute saat URL hash berubah
 window.addEventListener("hashchange", handleRoute);
 </script>
 
