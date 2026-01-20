@@ -13,6 +13,8 @@
   --accent:#e50914;
   --text:#fff;
   --muted:#9a9aab;
+  --sk1:#222;
+  --sk2:#333;
 }
 
 *{box-sizing:border-box}
@@ -58,6 +60,7 @@ header{
   border-radius:16px;
   overflow:hidden;
   box-shadow:0 20px 40px rgba(0,0,0,.5);
+  margin-bottom:16px;
 }
 .player iframe{
   width:100%;
@@ -70,18 +73,17 @@ header{
 
 /* ================= VIDEO INFO ================= */
 .video-info{
-  margin:16px 4px 30px;
+  display:none;
+  margin-bottom:30px;
 }
-.video-info h1{
-  font-size:20px;
-  margin:0 0 6px;
+.video-title{
+  font-size:18px;
+  font-weight:600;
 }
 .video-meta{
-  font-size:14px;
+  font-size:13px;
   color:var(--muted);
-  display:flex;
-  gap:16px;
-  flex-wrap:wrap;
+  margin-top:6px;
 }
 
 /* ================= GRID ================= */
@@ -99,7 +101,6 @@ header{
 }
 .card:hover{
   transform:translateY(-6px);
-  box-shadow:0 12px 30px rgba(0,0,0,.4);
 }
 .card img{
   width:100%;
@@ -124,9 +125,7 @@ header{
   border-radius:8px;
   background:#1f1f2a;
 }
-.pagination a:hover{
-  background:var(--accent);
-}
+.pagination a:hover{background:var(--accent)}
 
 /* ================= FOOTER ================= */
 footer{
@@ -134,6 +133,46 @@ footer{
   padding:20px;
   color:var(--muted);
   font-size:13px;
+}
+
+/* ================= SKELETON ================= */
+.skeleton{
+  background:linear-gradient(
+    90deg,
+    var(--sk1) 25%,
+    var(--sk2) 37%,
+    var(--sk1) 63%
+  );
+  background-size:400% 100%;
+  animation:shimmer 1.4s infinite;
+}
+
+@keyframes shimmer{
+  0%{background-position:100% 0}
+  100%{background-position:-100% 0}
+}
+
+.sk-player{
+  width:100%;
+  height:520px;
+  border-radius:16px;
+  margin-bottom:16px;
+}
+@media(max-width:768px){
+  .sk-player{height:240px}
+}
+
+.sk-title{height:18px;width:60%;margin-bottom:8px;border-radius:6px}
+.sk-meta{height:12px;width:40%;border-radius:6px}
+
+.sk-card .thumb{
+  aspect-ratio:16/9;
+  border-radius:14px;
+}
+.sk-card .text{
+  height:14px;
+  margin:10px;
+  border-radius:6px;
 }
 </style>
 </head>
@@ -149,25 +188,28 @@ footer{
 
 <div class="container">
 
-  <!-- PLAYER -->
+  <!-- ===== SKELETON PLAYER ===== -->
+  <div id="skPlayer" class="skeleton sk-player"></div>
+  <div id="skInfo">
+    <div class="skeleton sk-title"></div>
+    <div class="skeleton sk-meta"></div>
+  </div>
+
+  <!-- ===== PLAYER ===== -->
   <div id="playerBox" class="player">
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- VIDEO INFO -->
-  <div id="videoInfo" class="video-info" style="display:none">
-    <h1 id="videoTitle"></h1>
-    <div class="video-meta">
-      <span id="videoDuration">⏱️ -</span>
-      <span id="videoViews">👁️ -</span>
-      <span id="videoDate">📅 -</span>
-    </div>
+  <!-- ===== VIDEO INFO ===== -->
+  <div id="videoInfo" class="video-info">
+    <div id="videoTitle" class="video-title"></div>
+    <div id="videoMeta" class="video-meta"></div>
   </div>
 
-  <!-- VIDEO LIST -->
+  <!-- ===== VIDEO LIST ===== -->
   <div id="videos" class="grid"></div>
 
-  <!-- PAGINATION -->
+  <!-- ===== PAGINATION ===== -->
   <div id="pagination" class="pagination"></div>
 
 </div>
@@ -177,133 +219,106 @@ footer{
 </footer>
 
 <script>
-/* ======================================================
-   CONFIG (MUDAH DIUBAH)
-====================================================== */
-
-// Jumlah video per halaman di BERANDA
+/* ================= CONFIG ================= */
+// Jumlah video di beranda
 const HOME_PER_PAGE = 2;
-
-// Jumlah video rekomendasi di HALAMAN STREAM
+// Jumlah video rekomendasi di halaman stream
 const STREAM_RECOMMEND = 10;
 
-/* ======================================================
-   ELEMENTS
-====================================================== */
+/* ================= VAR ================= */
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
 const list = document.getElementById("videos");
 const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
 const player = document.getElementById("player");
-
 const videoInfo = document.getElementById("videoInfo");
 const videoTitle = document.getElementById("videoTitle");
-const videoDuration = document.getElementById("videoDuration");
-const videoViews = document.getElementById("videoViews");
-const videoDate = document.getElementById("videoDate");
+const videoMeta = document.getElementById("videoMeta");
+const skPlayer = document.getElementById("skPlayer");
+const skInfo = document.getElementById("skInfo");
 
 let FILES = [];
+const params = new URLSearchParams(location.search);
+const PAGE = parseInt(params.get("page") || "1");
 
-/* ======================================================
-   UTIL
-====================================================== */
-function formatDate(date){
-  if(!date) return "-";
-  return new Date(date).toLocaleDateString("id-ID",{
-    day:"numeric",month:"long",year:"numeric"
-  });
-}
-
-function shuffle(arr){
-  return arr.sort(()=>0.5 - Math.random());
-}
-
-/* ======================================================
-   PLAY VIDEO
-====================================================== */
+/* ================= PLAY VIDEO ================= */
 function playVideo(v){
-  player.src = `https://filemoon.to/e/${v.file_code}`;
-  document.title = v.title + " – Streamzu";
+  skPlayer.style.display = "none";
+  skInfo.style.display = "none";
 
-  videoTitle.textContent = v.title || "Untitled Video";
-  videoDuration.textContent = `⏱️ ${v.length || v.duration || "-"}`;
-  videoViews.textContent = `👁️ ${v.views || "0"} views`;
-  videoDate.textContent = `📅 ${formatDate(v.uploaded || v.created_at)}`;
-
-  videoInfo.style.display = "block";
   playerBox.style.display = "block";
+  videoInfo.style.display = "block";
 
+  player.src = `https://filemoon.to/e/${v.file_code}`;
+  videoTitle.textContent = v.title || "Untitled Video";
+  videoMeta.textContent =
+    `⏱ ${v.length || "?"} | 👁 ${v.views || "0"} views | 📅 ${v.uploaded || "?"}`;
+
+  document.title = videoTitle.textContent + " – Streamzu";
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ======================================================
-   ROUTER (HASH)
-====================================================== */
+/* ================= ROUTER ================= */
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
   if(!match) return;
 
-  history.replaceState(null,"",location.pathname + location.hash);
-
-  const video = FILES.find(v=>v.file_code===match[1]);
-  if(!video) return;
-
-  playVideo(video);
-
-  // tampilkan rekomendasi acak
-  renderList(shuffle([...FILES]).slice(0,STREAM_RECOMMEND), true);
+  history.replaceState(null,"",location.pathname+location.hash);
+  const v = FILES.find(x=>x.file_code===match[1]);
+  if(v) playVideo(v);
 }
 
-/* ======================================================
-   RENDER LIST
-====================================================== */
-function renderList(data, isStream=false){
-  list.innerHTML = "";
-  pagination.innerHTML = "";
-
-  data.forEach(v=>{
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
-      <p>${v.title || "Untitled Video"}</p>
-    `;
-    card.onclick = ()=>{
-      location.hash = `/e/${v.file_code}`;
-    };
-    list.appendChild(card);
-  });
-
-  if(isStream) return;
-
-  const params = new URLSearchParams(location.search);
-  const page = parseInt(params.get("page") || "1");
-  if(page * HOME_PER_PAGE < FILES.length){
-    pagination.innerHTML =
-      `<a href="?page=${page+1}">Lihat video lainnya →</a>`;
-  }
-}
-
-/* ======================================================
-   LOAD API
-====================================================== */
+/* ================= LOAD API ================= */
 fetch(API)
 .then(r=>r.json())
 .then(data=>{
   FILES = data?.result?.files || [];
-  if(!FILES.length) return;
 
-  const params = new URLSearchParams(location.search);
-  const page = parseInt(params.get("page") || "1");
+  // bersihkan skeleton list
+  list.innerHTML = "";
 
-  const start = (page-1)*HOME_PER_PAGE;
-  const end = start + HOME_PER_PAGE;
+  const isStream = location.hash.startsWith("#/e/");
+  let videos = [];
 
-  renderList(FILES.slice(start,end));
+  if(isStream){
+    videos = FILES.sort(()=>0.5-Math.random()).slice(0,STREAM_RECOMMEND);
+  }else{
+    const start = (PAGE-1)*HOME_PER_PAGE;
+    videos = FILES.slice(start,start+HOME_PER_PAGE);
+
+    if(start+HOME_PER_PAGE < FILES.length){
+      pagination.innerHTML =
+        `<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
+    }
+  }
+
+  videos.forEach(v=>{
+    const card = document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <img src="${v.single_img}">
+      <p>${v.title}</p>
+    `;
+    card.onclick=()=>{
+      history.replaceState(null,"",location.pathname);
+      location.hash=`/e/${v.file_code}`;
+    };
+    list.appendChild(card);
+  });
+
   handleRoute();
 });
 
-window.addEventListener("hashchange", handleRoute);
+/* ================= SKELETON LIST INIT ================= */
+for(let i=0;i<6;i++){
+  list.innerHTML+=`
+    <div class="sk-card">
+      <div class="skeleton thumb"></div>
+      <div class="skeleton text"></div>
+    </div>`;
+}
+
+window.addEventListener("hashchange",handleRoute);
 </script>
 
 </body>
