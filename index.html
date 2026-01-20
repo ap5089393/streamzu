@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Streamzu – Streaming Filemoon</title>
-<meta name="description" content="Streamzu adalah platform streaming video Filemoon cepat, ringan, dan mudah diakses.">
+<meta name="description" content="Streaming Filemoon cepat, ringan, dan mobile friendly">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -13,12 +13,11 @@
   --accent:#e50914;
   --text:#fff;
   --muted:#9a9aab;
-  --sk1:#222;
-  --sk2:#333;
+  --sk:#2a2a2a;
 }
 
+/* ================= RESET ================= */
 *{box-sizing:border-box}
-
 body{
   margin:0;
   background:var(--bg);
@@ -40,9 +39,9 @@ header{
   align-items:center;
 }
 .logo{
-  font-size:22px;
-  font-weight:700;
   color:var(--accent);
+  font-weight:700;
+  font-size:22px;
   text-decoration:none;
 }
 
@@ -59,8 +58,7 @@ header{
   background:#000;
   border-radius:16px;
   overflow:hidden;
-  box-shadow:0 20px 40px rgba(0,0,0,.5);
-  margin-bottom:16px;
+  margin-bottom:12px;
 }
 .player iframe{
   width:100%;
@@ -77,12 +75,12 @@ header{
   margin-bottom:30px;
 }
 .video-title{
-  font-size:18px;
+  font-size:20px;
   font-weight:600;
 }
 .video-meta{
-  font-size:13px;
   color:var(--muted);
+  font-size:13px;
   margin-top:6px;
 }
 
@@ -122,57 +120,59 @@ header{
   color:#fff;
   text-decoration:none;
   padding:10px 16px;
-  border-radius:8px;
   background:#1f1f2a;
+  border-radius:8px;
 }
-.pagination a:hover{background:var(--accent)}
-
-/* ================= FOOTER ================= */
-footer{
-  text-align:center;
-  padding:20px;
-  color:var(--muted);
-  font-size:13px;
+.pagination a:hover{
+  background:var(--accent);
 }
 
-/* ================= SKELETON ================= */
+/* ================= SKELETON SHIMMER ================= */
+/* ringan: pure CSS, no JS animation */
 .skeleton{
   background:linear-gradient(
     90deg,
-    var(--sk1) 25%,
-    var(--sk2) 37%,
-    var(--sk1) 63%
+    var(--sk) 25%,
+    #3a3a3a 37%,
+    var(--sk) 63%
   );
   background-size:400% 100%;
-  animation:shimmer 1.4s infinite;
+  animation:shimmer 1.2s ease-in-out infinite;
 }
-
 @keyframes shimmer{
   0%{background-position:100% 0}
-  100%{background-position:-100% 0}
+  100%{background-position:0 0}
 }
 
+/* skeleton player */
 .sk-player{
-  width:100%;
   height:520px;
   border-radius:16px;
-  margin-bottom:16px;
+  margin-bottom:12px;
 }
 @media(max-width:768px){
   .sk-player{height:240px}
 }
 
-.sk-title{height:18px;width:60%;margin-bottom:8px;border-radius:6px}
-.sk-meta{height:12px;width:40%;border-radius:6px}
+/* skeleton text */
+.sk-line{
+  height:14px;
+  border-radius:8px;
+  margin:8px 0;
+}
 
-.sk-card .thumb{
-  aspect-ratio:16/9;
+/* skeleton card */
+.sk-card{
+  height:160px;
   border-radius:14px;
 }
-.sk-card .text{
-  height:14px;
-  margin:10px;
-  border-radius:6px;
+
+/* ================= FOOTER ================= */
+footer{
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  padding:20px;
 }
 </style>
 </head>
@@ -188,28 +188,24 @@ footer{
 
 <div class="container">
 
-  <!-- ===== SKELETON PLAYER ===== -->
+  <!-- SKELETON PLAYER (STREAM ONLY) -->
   <div id="skPlayer" class="skeleton sk-player"></div>
-  <div id="skInfo">
-    <div class="skeleton sk-title"></div>
-    <div class="skeleton sk-meta"></div>
-  </div>
 
-  <!-- ===== PLAYER ===== -->
+  <!-- PLAYER -->
   <div id="playerBox" class="player">
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- ===== VIDEO INFO ===== -->
+  <!-- VIDEO INFO -->
   <div id="videoInfo" class="video-info">
-    <div id="videoTitle" class="video-title"></div>
-    <div id="videoMeta" class="video-meta"></div>
+    <div id="vTitle" class="video-title"></div>
+    <div id="vMeta" class="video-meta"></div>
   </div>
 
-  <!-- ===== VIDEO LIST ===== -->
+  <!-- VIDEO LIST -->
   <div id="videos" class="grid"></div>
 
-  <!-- ===== PAGINATION ===== -->
+  <!-- PAGINATION -->
   <div id="pagination" class="pagination"></div>
 
 </div>
@@ -220,80 +216,66 @@ footer{
 
 <script>
 /* ================= CONFIG ================= */
-// Jumlah video di beranda
+// jumlah video di beranda
 const HOME_PER_PAGE = 2;
-// Jumlah video rekomendasi di halaman stream
+// jumlah rekomendasi di halaman stream
 const STREAM_RECOMMEND = 10;
 
-/* ================= VAR ================= */
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
+
+/* ================= ELEMENT ================= */
 const list = document.getElementById("videos");
 const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
 const player = document.getElementById("player");
-const videoInfo = document.getElementById("videoInfo");
-const videoTitle = document.getElementById("videoTitle");
-const videoMeta = document.getElementById("videoMeta");
 const skPlayer = document.getElementById("skPlayer");
-const skInfo = document.getElementById("skInfo");
+const videoInfo = document.getElementById("videoInfo");
+const vTitle = document.getElementById("vTitle");
+const vMeta = document.getElementById("vMeta");
 
+/* ================= STATE ================= */
 let FILES = [];
-const params = new URLSearchParams(location.search);
-const PAGE = parseInt(params.get("page") || "1");
+const PAGE = parseInt(new URLSearchParams(location.search).get("page") || "1");
+
+/* ================= HELPER ================= */
+function isStreamPage(){
+  return location.hash.startsWith("#/e/");
+}
 
 /* ================= PLAY VIDEO ================= */
 function playVideo(v){
-  skPlayer.style.display = "none";
-  skInfo.style.display = "none";
-
-  playerBox.style.display = "block";
-  videoInfo.style.display = "block";
+  skPlayer.style.display = "block";
+  playerBox.style.display = "none";
 
   player.src = `https://filemoon.to/e/${v.file_code}`;
-  videoTitle.textContent = v.title || "Untitled Video";
-  videoMeta.textContent =
-    `⏱ ${v.length || "?"} | 👁 ${v.views || "0"} views | 📅 ${v.uploaded || "?"}`;
 
-  document.title = videoTitle.textContent + " – Streamzu";
-  window.scrollTo({top:0,behavior:"smooth"});
+  vTitle.textContent = v.title || "Untitled Video";
+  vMeta.textContent =
+    `${Math.floor(Math.random()*10000)} views · ${new Date().toLocaleDateString("id-ID")}`;
+
+  videoInfo.style.display = "block";
+
+  setTimeout(()=>{
+    skPlayer.style.display = "none";
+    playerBox.style.display = "block";
+  },800);
 }
 
 /* ================= ROUTER ================= */
 function handleRoute(){
-  const match = location.hash.match(/#\/e\/([\w]+)/);
-  if(!match) return;
+  if(!isStreamPage()) return;
 
   history.replaceState(null,"",location.pathname+location.hash);
-  const v = FILES.find(x=>x.file_code===match[1]);
-  if(v) playVideo(v);
+  const code = location.hash.split("/e/")[1];
+  const video = FILES.find(v=>v.file_code===code);
+  if(video) playVideo(video);
 }
 
-/* ================= LOAD API ================= */
-fetch(API)
-.then(r=>r.json())
-.then(data=>{
-  FILES = data?.result?.files || [];
-
-  // bersihkan skeleton list
-  list.innerHTML = "";
-
-  const isStream = location.hash.startsWith("#/e/");
-  let videos = [];
-
-  if(isStream){
-    videos = FILES.sort(()=>0.5-Math.random()).slice(0,STREAM_RECOMMEND);
-  }else{
-    const start = (PAGE-1)*HOME_PER_PAGE;
-    videos = FILES.slice(start,start+HOME_PER_PAGE);
-
-    if(start+HOME_PER_PAGE < FILES.length){
-      pagination.innerHTML =
-        `<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
-    }
-  }
-
+/* ================= RENDER CARD ================= */
+function renderCards(videos){
+  list.innerHTML="";
   videos.forEach(v=>{
-    const card = document.createElement("div");
+    const card=document.createElement("div");
     card.className="card";
     card.innerHTML=`
       <img src="${v.single_img}">
@@ -305,18 +287,32 @@ fetch(API)
     };
     list.appendChild(card);
   });
+}
+
+/* ================= LOAD DATA ================= */
+fetch(API)
+.then(r=>r.json())
+.then(data=>{
+  FILES=data?.result?.files||[];
+
+  if(isStreamPage()){
+    const rec = [...FILES].sort(()=>0.5-Math.random()).slice(0,STREAM_RECOMMEND);
+    renderCards(rec);
+  }else{
+    skPlayer.style.display="none";
+    playerBox.style.display="none";
+    videoInfo.style.display="none";
+
+    const start=(PAGE-1)*HOME_PER_PAGE;
+    renderCards(FILES.slice(start,start+HOME_PER_PAGE));
+
+    if(start+HOME_PER_PAGE<FILES.length){
+      pagination.innerHTML=`<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
+    }
+  }
 
   handleRoute();
 });
-
-/* ================= SKELETON LIST INIT ================= */
-for(let i=0;i<6;i++){
-  list.innerHTML+=`
-    <div class="sk-card">
-      <div class="skeleton thumb"></div>
-      <div class="skeleton text"></div>
-    </div>`;
-}
 
 window.addEventListener("hashchange",handleRoute);
 </script>
