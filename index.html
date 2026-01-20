@@ -24,7 +24,7 @@ body{
   font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
 }
 
-/* HEADER */
+/* ================= HEADER ================= */
 header{
   background:#000;
   border-bottom:1px solid #1f1f2a;
@@ -44,21 +44,20 @@ header{
   text-decoration:none;
 }
 
-/* LAYOUT */
+/* ================= LAYOUT ================= */
 .container{
   max-width:1200px;
   margin:auto;
   padding:20px;
 }
 
-/* PLAYER */
+/* ================= PLAYER ================= */
 .player{
-  display:none; /* default hidden, akan muncul saat user klik video */
+  display:none;
   background:#000;
   border-radius:16px;
   overflow:hidden;
   box-shadow:0 20px 40px rgba(0,0,0,.5);
-  margin-bottom:30px;
 }
 .player iframe{
   width:100%;
@@ -69,7 +68,23 @@ header{
   .player iframe{height:240px}
 }
 
-/* GRID VIDEO */
+/* ================= VIDEO INFO ================= */
+.video-info{
+  margin:16px 4px 30px;
+}
+.video-info h1{
+  font-size:20px;
+  margin:0 0 6px;
+}
+.video-meta{
+  font-size:14px;
+  color:var(--muted);
+  display:flex;
+  gap:16px;
+  flex-wrap:wrap;
+}
+
+/* ================= GRID ================= */
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
@@ -97,7 +112,7 @@ header{
   font-size:14px;
 }
 
-/* PAGINATION (hanya berlaku untuk halaman beranda) */
+/* ================= PAGINATION ================= */
 .pagination{
   margin:30px 0;
   text-align:center;
@@ -113,7 +128,7 @@ header{
   background:var(--accent);
 }
 
-/* FOOTER */
+/* ================= FOOTER ================= */
 footer{
   text-align:center;
   padding:20px;
@@ -134,15 +149,25 @@ footer{
 
 <div class="container">
 
-  <!-- PLAYER VIDEO -->
+  <!-- PLAYER -->
   <div id="playerBox" class="player">
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- LIST VIDEO -->
+  <!-- VIDEO INFO -->
+  <div id="videoInfo" class="video-info" style="display:none">
+    <h1 id="videoTitle"></h1>
+    <div class="video-meta">
+      <span id="videoDuration">⏱️ -</span>
+      <span id="videoViews">👁️ -</span>
+      <span id="videoDate">📅 -</span>
+    </div>
+  </div>
+
+  <!-- VIDEO LIST -->
   <div id="videos" class="grid"></div>
 
-  <!-- PAGINATION (beranda saja) -->
+  <!-- PAGINATION -->
   <div id="pagination" class="pagination"></div>
 
 </div>
@@ -151,112 +176,133 @@ footer{
   © 2026 Streamzu · Powered by Filemoon
 </footer>
 
-  <!-- API FILEMOON -->
 <script>
-const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos"; /* ubah const api sesuai dengan punya mu yang sudah dibuat di cloudflare tadi */
+/* ======================================================
+   CONFIG (MUDAH DIUBAH)
+====================================================== */
+
+// Jumlah video per halaman di BERANDA
+const HOME_PER_PAGE = 2;
+
+// Jumlah video rekomendasi di HALAMAN STREAM
+const STREAM_RECOMMEND = 10;
+
+/* ======================================================
+   ELEMENTS
+====================================================== */
+const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
 const list = document.getElementById("videos");
 const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
 const player = document.getElementById("player");
 
-// ===== CONFIG =====
-// Jumlah video per halaman di beranda
-const HOME_PER_PAGE = 2;
-// Jumlah video rekomendasi acak di halaman stream
-const STREAM_RECOMMEND = 10;
+const videoInfo = document.getElementById("videoInfo");
+const videoTitle = document.getElementById("videoTitle");
+const videoDuration = document.getElementById("videoDuration");
+const videoViews = document.getElementById("videoViews");
+const videoDate = document.getElementById("videoDate");
 
 let FILES = [];
 
-// ambil page dari query string beranda (misal ?page=2)
-const params = new URLSearchParams(location.search);
-const PAGE = parseInt(params.get("page") || "1");
+/* ======================================================
+   UTIL
+====================================================== */
+function formatDate(date){
+  if(!date) return "-";
+  return new Date(date).toLocaleDateString("id-ID",{
+    day:"numeric",month:"long",year:"numeric"
+  });
+}
 
-/* ================= PLAY VIDEO ================= */
-function playVideo(code, title="Streamzu"){
-  if(!code) return;
-  player.src = `https://filemoon.to/e/${code}`;
-  document.title = title + " – Streamzu";
-  playerBox.style.display = "block"; // tampilkan player saat video diputar
+function shuffle(arr){
+  return arr.sort(()=>0.5 - Math.random());
+}
+
+/* ======================================================
+   PLAY VIDEO
+====================================================== */
+function playVideo(v){
+  player.src = `https://filemoon.to/e/${v.file_code}`;
+  document.title = v.title + " – Streamzu";
+
+  videoTitle.textContent = v.title || "Untitled Video";
+  videoDuration.textContent = `⏱️ ${v.length || v.duration || "-"}`;
+  videoViews.textContent = `👁️ ${v.views || "0"} views`;
+  videoDate.textContent = `📅 ${formatDate(v.uploaded || v.created_at)}`;
+
+  videoInfo.style.display = "block";
+  playerBox.style.display = "block";
+
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ================= ROUTER HASH ================= */
-// fungsi untuk membaca hash URL dan autoplay video jika ada
+/* ======================================================
+   ROUTER (HASH)
+====================================================== */
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
-  if(!match) return false;
+  if(!match) return;
 
-  const code = match[1];
-  const video = FILES.find(v=>v.file_code===code);
-  playVideo(code, video?.title);
-
-  // hapus query ?page agar URL tetap bersih saat buka video
   history.replaceState(null,"",location.pathname + location.hash);
-  return true;
+
+  const video = FILES.find(v=>v.file_code===match[1]);
+  if(!video) return;
+
+  playVideo(video);
+
+  // tampilkan rekomendasi acak
+  renderList(shuffle([...FILES]).slice(0,STREAM_RECOMMEND), true);
 }
 
-/* ================= RANDOM RECOMMENDATION ================= */
-function getRandomVideos(count){
-  const shuffled = FILES.slice().sort(()=>0.5 - Math.random()); // acak array
-  return shuffled.slice(0, count); // ambil sejumlah count
+/* ======================================================
+   RENDER LIST
+====================================================== */
+function renderList(data, isStream=false){
+  list.innerHTML = "";
+  pagination.innerHTML = "";
+
+  data.forEach(v=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
+      <p>${v.title || "Untitled Video"}</p>
+    `;
+    card.onclick = ()=>{
+      location.hash = `/e/${v.file_code}`;
+    };
+    list.appendChild(card);
+  });
+
+  if(isStream) return;
+
+  const params = new URLSearchParams(location.search);
+  const page = parseInt(params.get("page") || "1");
+  if(page * HOME_PER_PAGE < FILES.length){
+    pagination.innerHTML =
+      `<a href="?page=${page+1}">Lihat video lainnya →</a>`;
+  }
 }
 
-/* ================= LOAD API ================= */
+/* ======================================================
+   LOAD API
+====================================================== */
 fetch(API)
 .then(r=>r.json())
 .then(data=>{
   FILES = data?.result?.files || [];
   if(!FILES.length) return;
 
-  // cek apakah halaman stream (hash) atau beranda
-  const isStream = handleRoute();
+  const params = new URLSearchParams(location.search);
+  const page = parseInt(params.get("page") || "1");
 
-  if(isStream){
-    // ===== HALAMAN STREAM =====
-    // tampilkan 10 video rekomendasi acak
-    const recommended = getRandomVideos(STREAM_RECOMMEND);
-    recommended.forEach(v=>{
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
-        <p>${v.title || 'Untitled Video'}</p>
-      `;
-      card.onclick = ()=>{
-        // ganti hash untuk autoplay video baru
-        location.hash = `/e/${v.file_code}`;
-      };
-      list.appendChild(card);
-    });
-  } else {
-    // ===== HALAMAN BERANDA =====
-    // tampilkan 2 video per halaman
-    const start = (PAGE-1) * HOME_PER_PAGE;
-    const end = start + HOME_PER_PAGE;
-    const pageVideos = FILES.slice(start, end);
+  const start = (page-1)*HOME_PER_PAGE;
+  const end = start + HOME_PER_PAGE;
 
-    pageVideos.forEach(v=>{
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <img src="${v.single_img || 'https://dummyimage.com/320x180/000/fff&text=Video'}">
-        <p>${v.title || 'Untitled Video'}</p>
-      `;
-      card.onclick = ()=>{
-        // ganti hash untuk buka halaman stream video
-        location.hash = `/e/${v.file_code}`;
-      };
-      list.appendChild(card);
-    });
-
-    // ===== PAGINATION HALAMAN BERANDA =====
-    if(end < FILES.length){
-      pagination.innerHTML = `<a href="?page=${PAGE + 1}">Lihat video lainnya →</a>`;
-    }
-  }
+  renderList(FILES.slice(start,end));
+  handleRoute();
 });
 
-// jalankan handleRoute saat URL hash berubah
 window.addEventListener("hashchange", handleRoute);
 </script>
 
