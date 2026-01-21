@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>Streamzu – Streaming Filemoon</title>
+<meta name="description" content="Streamzu adalah platform streaming video Filemoon cepat, ringan, dan mudah diakses.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Streaming video Filemoon cepat, ringan, dan responsif.">
 
 <style>
 :root{
@@ -14,7 +14,9 @@
   --text:#fff;
   --muted:#9a9aab;
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   background:var(--bg);
@@ -22,7 +24,7 @@ body{
   font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
 }
 
-/* HEADER */
+/* ================= HEADER ================= */
 header{
   background:#000;
   border-bottom:1px solid #1f1f2a;
@@ -42,20 +44,21 @@ header{
   text-decoration:none;
 }
 
-/* LAYOUT */
+/* ================= LAYOUT ================= */
 .container{
   max-width:1200px;
   margin:auto;
-  padding:16px;
+  padding:20px;
 }
 
-/* PLAYER */
+/* ================= PLAYER ================= */
 .player{
   display:none;
   background:#000;
   border-radius:16px;
   overflow:hidden;
-  margin-bottom:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
+  margin-bottom:14px;
 }
 .player iframe{
   width:100%;
@@ -66,65 +69,82 @@ header{
   .player iframe{height:240px}
 }
 
-/* VIDEO INFO */
+/* ================= VIDEO INFO ================= */
 .video-info{
-  display:none;
-  margin-bottom:24px;
+  margin:14px 0 26px;
 }
 .video-info h1{
-  font-size:18px;
-  margin:8px 0;
+  font-size:20px;
+  margin:0 0 6px;
 }
 .video-meta{
   font-size:13px;
   color:var(--muted);
 }
 
-/* GRID */
+/* ================= GRID ================= */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:14px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;
 }
+
+/* ================= CARD ================= */
 .card{
   background:var(--card);
   border-radius:14px;
-  padding:28px 10px;
-  text-align:center;
+  overflow:hidden;
   cursor:pointer;
   transition:.25s;
 }
 .card:hover{
-  transform:translateY(-4px);
+  transform:translateY(-6px);
   box-shadow:0 12px 30px rgba(0,0,0,.4);
 }
-.card .thumb{
-  font-size:26px;
+
+/* PREVIEW TEXT */
+.preview{
+  aspect-ratio:16/9;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#1b1b24,#0f0f15);
   font-weight:800;
-  letter-spacing:2px;
+  letter-spacing:4px;
+  font-size:28px;
+  color:#ffffff22;
+  text-shadow:0 0 25px rgba(255,255,255,.08);
+  user-select:none;
 }
-.card p{
-  margin:10px 0 0;
-  font-size:13px;
-  color:#ddd;
+.card:hover .preview{
+  color:#ffffff55;
 }
 
-/* PAGINATION */
+/* TITLE */
+.card p{
+  margin:0;
+  padding:10px 12px;
+  font-size:14px;
+  line-height:1.35;
+}
+
+/* ================= PAGINATION ================= */
 .pagination{
-  margin:28px 0;
+  margin:30px 0;
   text-align:center;
 }
 .pagination a{
-  display:inline-block;
-  padding:10px 18px;
-  background:#1f1f2a;
-  border-radius:8px;
   color:#fff;
   text-decoration:none;
+  padding:10px 16px;
+  border-radius:8px;
+  background:#1f1f2a;
 }
-.pagination a:hover{background:var(--accent)}
+.pagination a:hover{
+  background:var(--accent);
+}
 
-/* FOOTER */
+/* ================= FOOTER ================= */
 footer{
   text-align:center;
   padding:20px;
@@ -141,32 +161,6 @@ footer{
     <a href="/" class="logo">Streamzu</a>
     <span style="font-size:13px;color:#aaa">Filemoon Streaming</span>
   </div>
-
-  <!-- ================= POPUNDER GLOBAL ================= -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"
-    integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ="
-    crossorigin="anonymous"></script>
-
-  <script>
-  $(document).ready(function () {
-
-    const DIRECT_LINK = "https://www.effectivecpmrate.com/hgpj1avhj?key=59e818a76a09eed4cc62e240497d2343";
-    const COOLDOWN = 60000; // 60 detik (1 menit)
-
-    $("body").on("click", function () {
-      const now = Date.now();
-      const last = localStorage.getItem("last_popunder") || 0;
-
-      if (now - last >= COOLDOWN) {
-        localStorage.setItem("last_popunder", now);
-        window.open(DIRECT_LINK, "_blank");
-      }
-    });
-
-  });
-  </script>
-  <!-- =================================================== -->
-
 </header>
 
 <div class="container">
@@ -176,12 +170,10 @@ footer{
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- VIDEO INFO -->
-  <div id="videoInfo" class="video-info">
+  <!-- INFO -->
+  <div id="videoInfo" class="video-info" style="display:none">
     <h1 id="videoTitle"></h1>
-    <div class="video-meta">
-      ⏱ <span id="videoDuration">–</span> • 👁 <span id="videoViews">–</span> • 📅 <span id="videoDate">–</span>
-    </div>
+    <div id="videoMeta" class="video-meta"></div>
   </div>
 
   <!-- VIDEO LIST -->
@@ -197,83 +189,107 @@ footer{
 </footer>
 
 <script>
-/* ================= CONFIG ================= */
+// ================= CONFIG =================
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
-const HOME_PER_PAGE = 2;
-const STREAM_RECOMMEND = 10;
+const HOME_PER_PAGE = 8;        // video per halaman beranda
+const STREAM_RECOMMEND = 6;    // video rekomendasi di halaman stream
 
-/* ================= STATE ================= */
-let FILES = [];
+// ================= ELEMENT =================
 const list = document.getElementById("videos");
 const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
-const videoInfo = document.getElementById("videoInfo");
 const player = document.getElementById("player");
+const videoInfo = document.getElementById("videoInfo");
+const videoTitle = document.getElementById("videoTitle");
+const videoMeta = document.getElementById("videoMeta");
 
-/* ================= ROUTER ================= */
+let FILES = [];
+
+// ================= PAGE =================
+const params = new URLSearchParams(location.search);
+const PAGE = parseInt(params.get("page") || "1");
+
+// ================= PLAY VIDEO =================
+function playVideo(code, title){
+  player.src = `https://filemoon.to/e/${code}`;
+  playerBox.style.display = "block";
+  videoInfo.style.display = "block";
+
+  videoTitle.textContent = title || "Untitled Video";
+  videoMeta.textContent =
+    Math.floor(Math.random()*9000+1000) + " views · " +
+    new Date().toLocaleDateString("id-ID");
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// ================= ROUTER =================
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
   if(!match) return;
 
   history.replaceState(null,"",location.pathname + location.hash);
+
   const code = match[1];
   const video = FILES.find(v=>v.file_code===code);
-  if(!video) return;
+  if(video) playVideo(code, video.title);
 
-  player.src = `https://filemoon.to/e/${code}`;
-  playerBox.style.display = "block";
-  videoInfo.style.display = "block";
+  renderRecommend(code);
+}
 
-  videoTitle.textContent = video.title || "Untitled";
-  videoDuration.textContent = video.length || "–";
-  videoViews.textContent = video.views || "–";
-  videoDate.textContent = video.uploaded || "–";
-
+// ================= RECOMMEND =================
+function renderRecommend(except){
   list.innerHTML = "";
-  shuffle([...FILES]).slice(0, STREAM_RECOMMEND)
-    .forEach(v=>renderCard(v));
+  pagination.innerHTML = "";
+
+  FILES
+    .filter(v=>v.file_code!==except)
+    .sort(()=>0.5-Math.random())
+    .slice(0,STREAM_RECOMMEND)
+    .forEach(v=>{
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="preview">VIDEO</div>
+        <p>${v.title || "Untitled Video"}</p>
+      `;
+      card.onclick = ()=>{
+        location.hash = `/e/${v.file_code}`;
+      };
+      list.appendChild(card);
+    });
 }
 
-/* ================= RENDER ================= */
-function renderCard(v){
-  const card = document.createElement("div");
-  card.className = "card";
-  card.innerHTML = `
-    <div class="thumb">VIDEO</div>
-    <p>${v.title || "Untitled Video"}</p>
-  `;
-  card.onclick = ()=> location.hash = `/e/${v.file_code}`;
-  list.appendChild(card);
-}
-
-/* ================= UTIL ================= */
-function shuffle(a){
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
-
-/* ================= INIT ================= */
-const params = new URLSearchParams(location.search);
-const PAGE = parseInt(params.get("page")||"1");
-
-fetch(API).then(r=>r.json()).then(data=>{
+// ================= LOAD API =================
+fetch(API)
+.then(r=>r.json())
+.then(data=>{
   FILES = data?.result?.files || [];
   if(!FILES.length) return;
 
-  if(location.hash){
-    handleRoute();
-  }else{
-    const start=(PAGE-1)*HOME_PER_PAGE;
-    FILES.slice(start,start+HOME_PER_PAGE)
-      .forEach(v=>renderCard(v));
+  const start = (PAGE-1)*HOME_PER_PAGE;
+  const end = start + HOME_PER_PAGE;
 
-    if(start+HOME_PER_PAGE<FILES.length){
-      pagination.innerHTML=`<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
-    }
+  FILES.slice(start,end).forEach(v=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="preview">VIDEO</div>
+      <p>${v.title || "Untitled Video"}</p>
+    `;
+    card.onclick = ()=>{
+      history.replaceState(null,"",location.pathname);
+      location.hash = `/e/${v.file_code}`;
+    };
+    list.appendChild(card);
+  });
+
+  if(end < FILES.length){
+    pagination.innerHTML =
+      `<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
   }
+
+  handleRoute();
 });
 
 window.addEventListener("hashchange", handleRoute);
