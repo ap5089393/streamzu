@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Streamzu – Streaming Filemoon</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Streaming video Filemoon cepat, ringan, dan responsif.">
+<meta name="description" content="Streaming Filemoon ringan, cepat, dan mobile friendly.">
 
 <style>
 :root{
@@ -14,7 +14,9 @@
   --text:#fff;
   --muted:#9a9aab;
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   background:var(--bg);
@@ -46,7 +48,7 @@ header{
 .container{
   max-width:1200px;
   margin:auto;
-  padding:16px;
+  padding:20px;
 }
 
 /* PLAYER */
@@ -55,7 +57,7 @@ header{
   background:#000;
   border-radius:16px;
   overflow:hidden;
-  margin-bottom:16px;
+  margin-bottom:20px;
 }
 .player iframe{
   width:100%;
@@ -66,14 +68,13 @@ header{
   .player iframe{height:240px}
 }
 
-/* VIDEO INFO */
+/* INFO */
 .video-info{
-  display:none;
-  margin-bottom:24px;
+  margin-bottom:20px;
 }
 .video-info h1{
-  font-size:18px;
-  margin:8px 0;
+  font-size:20px;
+  margin:8px 0 6px;
 }
 .video-meta{
   font-size:13px;
@@ -83,49 +84,62 @@ header{
 /* GRID */
 .grid{
   display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:14px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;
 }
 .card{
   background:var(--card);
   border-radius:14px;
-  padding:28px 10px;
-  text-align:center;
   cursor:pointer;
   transition:.25s;
+  overflow:hidden;
 }
 .card:hover{
-  transform:translateY(-4px);
-  box-shadow:0 12px 30px rgba(0,0,0,.4);
+  transform:translateY(-5px);
 }
-.card .thumb{
-  font-size:26px;
+.thumb{
+  aspect-ratio:16/9;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   font-weight:800;
+  font-size:26px;
   letter-spacing:2px;
-  color:#fff;
+  background:linear-gradient(120deg,#222,#111,#222);
 }
 .card p{
-  margin:10px 0 0;
-  font-size:13px;
-  color:#ddd;
+  margin:0;
+  padding:10px 12px;
+  font-size:14px;
 }
 
 /* PAGINATION */
 .pagination{
-  margin:28px 0;
+  margin:30px 0;
   text-align:center;
 }
 .pagination a{
-  display:inline-block;
-  padding:10px 18px;
-  background:#1f1f2a;
-  border-radius:8px;
   color:#fff;
   text-decoration:none;
+  padding:10px 16px;
+  border-radius:8px;
+  background:#1f1f2a;
 }
-.pagination a:hover{background:var(--accent)}
+.pagination a:hover{
+  background:var(--accent);
+}
 
-/* FOOTER */
+/* SKELETON */
+.skeleton{
+  background:linear-gradient(90deg,#1a1a1a,#2a2a2a,#1a1a1a);
+  background-size:200% 100%;
+  animation:shimmer 1.2s infinite;
+}
+@keyframes shimmer{
+  0%{background-position:200%}
+  100%{background-position:-200%}
+}
+
 footer{
   text-align:center;
   padding:20px;
@@ -133,6 +147,16 @@ footer{
   font-size:13px;
 }
 </style>
+
+<!-- DIRECTLINK SCRIPT -->
+<script>
+function triggerAd(){
+  window.open(
+    "https://www.effectivecpmrate.com/hgpj1avhj?key=59e818a76a09eed4cc62e240497d2343",
+    "_blank"
+  );
+}
+</script>
 
 </head>
 <body>
@@ -142,9 +166,6 @@ footer{
     <a href="/" class="logo">Streamzu</a>
     <span style="font-size:13px;color:#aaa">Filemoon Streaming</span>
   </div>
-
-  <!-- JQUERY + DIRECTLINK (TRIGGER VIA CARD ONLY) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
 </header>
 
 <div class="container">
@@ -154,12 +175,10 @@ footer{
     <iframe id="player" allowfullscreen allow="autoplay; fullscreen"></iframe>
   </div>
 
-  <!-- VIDEO INFO -->
-  <div id="videoInfo" class="video-info">
+  <!-- INFO -->
+  <div id="videoInfo" class="video-info" style="display:none">
     <h1 id="videoTitle"></h1>
-    <div class="video-meta">
-      ⏱ <span id="videoDuration">–</span> • 👁 <span id="videoViews">–</span> • 📅 <span id="videoDate">–</span>
-    </div>
+    <div class="video-meta" id="videoMeta"></div>
   </div>
 
   <!-- VIDEO LIST -->
@@ -175,100 +194,107 @@ footer{
 </footer>
 
 <script>
-/* ================= CONFIG ================= */
-const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
-const DIRECT_LINK = "https://www.effectivecpmrate.com/hgpj1avhj?key=59e818a76a09eed4cc62e240497d2343";
-const HOME_PER_PAGE = 2;        // video per halaman beranda
-const STREAM_RECOMMEND = 10;    // rekomendasi di halaman stream
-const AD_COOLDOWN = 60000;      // 60 detik
+// ===== CONFIG =====
+const HOME_PER_PAGE = 2;      // video per halaman beranda
+const STREAM_RECOMMEND = 10;  // video rekomendasi di halaman stream
 
-/* ================= STATE ================= */
-let FILES = [];
+const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
+
 const list = document.getElementById("videos");
 const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
-const videoInfo = document.getElementById("videoInfo");
 const player = document.getElementById("player");
+const videoInfo = document.getElementById("videoInfo");
+const videoTitle = document.getElementById("videoTitle");
+const videoMeta = document.getElementById("videoMeta");
 
-/* ================= ADS ================= */
-function triggerAd(){
-  const now = Date.now();
-  const last = localStorage.getItem("last_direct") || 0;
-  if(now - last >= AD_COOLDOWN){
-    localStorage.setItem("last_direct", now);
-    window.open(DIRECT_LINK, "_blank");
-  }
+let FILES = [];
+
+const params = new URLSearchParams(location.search);
+const PAGE = parseInt(params.get("page") || "1");
+
+/* PLAY VIDEO */
+function playVideo(v){
+  triggerAd();
+  player.src = `https://filemoon.to/e/${v.file_code}`;
+  playerBox.style.display = "block";
+  videoInfo.style.display = "block";
+  videoTitle.textContent = v.title || "Untitled Video";
+  videoMeta.textContent = `👁 ${v.views || 0} views · 📅 ${v.uploaded || 'Unknown'}`;
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-/* ================= ROUTER ================= */
+/* ROUTER */
 function handleRoute(){
   const match = location.hash.match(/#\/e\/([\w]+)/);
   if(!match) return;
 
   history.replaceState(null,"",location.pathname + location.hash);
-  const code = match[1];
-  const video = FILES.find(v=>v.file_code===code);
-  if(!video) return;
 
-  player.src = `https://filemoon.to/e/${code}`;
-  playerBox.style.display = "block";
-  videoInfo.style.display = "block";
+  const video = FILES.find(v=>v.file_code===match[1]);
+  if(video) renderStream(video);
+}
 
-  document.getElementById("videoTitle").textContent = video.title || "Untitled";
-  document.getElementById("videoDuration").textContent = video.length || "–";
-  document.getElementById("videoViews").textContent = video.views || "–";
-  document.getElementById("videoDate").textContent = video.uploaded || "–";
+/* STREAM PAGE */
+function renderStream(current){
+  playVideo(current);
 
   list.innerHTML = "";
-  shuffle([...FILES]).slice(0, STREAM_RECOMMEND).forEach(v=>renderCard(v,false));
+  pagination.innerHTML = "";
+
+  FILES
+    .filter(v=>v.file_code!==current.file_code)
+    .sort(()=>0.5-Math.random())
+    .slice(0,STREAM_RECOMMEND)
+    .forEach(v=>{
+      const card=document.createElement("div");
+      card.className="card";
+      card.innerHTML=`
+        <div class="thumb">VIDEO</div>
+        <p>${v.title||"Untitled"}</p>
+      `;
+      card.onclick=()=>{
+        location.hash=`/e/${v.file_code}`;
+      };
+      list.appendChild(card);
+    });
 }
 
-/* ================= RENDER ================= */
-function renderCard(v, allowAd=true){
-  const card = document.createElement("div");
-  card.className = "card";
-  card.innerHTML = `
-    <div class="thumb">VIDEO</div>
-    <p>${v.title || "Untitled Video"}</p>
-  `;
-  card.onclick = ()=>{
-    if(allowAd) triggerAd();   // 🔥 IKLAN HANYA DI SINI
-    location.hash = `/e/${v.file_code}`;
-  };
-  list.appendChild(card);
-}
-
-/* ================= UTIL ================= */
-function shuffle(a){
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
-
-/* ================= INIT ================= */
-const params = new URLSearchParams(location.search);
-const PAGE = parseInt(params.get("page")||"1");
-
-fetch(API).then(r=>r.json()).then(data=>{
-  FILES = data?.result?.files || [];
+/* LOAD API */
+fetch(API)
+.then(r=>r.json())
+.then(data=>{
+  FILES=data?.result?.files||[];
   if(!FILES.length) return;
 
-  if(location.hash){
+  const match = location.hash.match(/#\/e\/([\w]+)/);
+  if(match){
     handleRoute();
-  }else{
-    const start=(PAGE-1)*HOME_PER_PAGE;
-    FILES.slice(start,start+HOME_PER_PAGE)
-      .forEach(v=>renderCard(v,true));
+    return;
+  }
 
-    if(start+HOME_PER_PAGE<FILES.length){
-      pagination.innerHTML=`<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
-    }
+  const start=(PAGE-1)*HOME_PER_PAGE;
+  const end=start+HOME_PER_PAGE;
+
+  FILES.slice(start,end).forEach(v=>{
+    const card=document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <div class="thumb">VIDEO</div>
+      <p>${v.title||"Untitled"}</p>
+    `;
+    card.onclick=()=>{
+      location.hash=`/e/${v.file_code}`;
+    };
+    list.appendChild(card);
+  });
+
+  if(end<FILES.length){
+    pagination.innerHTML=`<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
   }
 });
 
-window.addEventListener("hashchange", handleRoute);
+window.addEventListener("hashchange",handleRoute);
 </script>
 
 </body>
