@@ -102,7 +102,6 @@ header{
   font-size:26px;
   font-weight:800;
   letter-spacing:2px;
-  color:#fff;
 }
 .card p{
   margin:10px 0 0;
@@ -133,8 +132,8 @@ footer{
   font-size:13px;
 }
 </style>
-
 </head>
+
 <body>
 
 <header>
@@ -143,8 +142,31 @@ footer{
     <span style="font-size:13px;color:#aaa">Filemoon Streaming</span>
   </div>
 
-  <!-- JQUERY + DIRECTLINK (TRIGGER VIA CARD ONLY) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
+  <!-- ================= POPUNDER GLOBAL ================= -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"
+    integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ="
+    crossorigin="anonymous"></script>
+
+  <script>
+  $(document).ready(function () {
+
+    const DIRECT_LINK = "https://www.effectivecpmrate.com/hgpj1avhj?key=59e818a76a09eed4cc62e240497d2343";
+    const COOLDOWN = 60000; // 60 detik (1 menit)
+
+    $("body").on("click", function () {
+      const now = Date.now();
+      const last = localStorage.getItem("last_popunder") || 0;
+
+      if (now - last >= COOLDOWN) {
+        localStorage.setItem("last_popunder", now);
+        window.open(DIRECT_LINK, "_blank");
+      }
+    });
+
+  });
+  </script>
+  <!-- =================================================== -->
+
 </header>
 
 <div class="container">
@@ -177,10 +199,8 @@ footer{
 <script>
 /* ================= CONFIG ================= */
 const API = "https://raspy-heart-f318.ap5089393.workers.dev/videos";
-const DIRECT_LINK = "https://www.effectivecpmrate.com/hgpj1avhj?key=59e818a76a09eed4cc62e240497d2343";
-const HOME_PER_PAGE = 2;        // video per halaman beranda
-const STREAM_RECOMMEND = 10;    // rekomendasi di halaman stream
-const AD_COOLDOWN = 60000;      // 60 detik
+const HOME_PER_PAGE = 2;
+const STREAM_RECOMMEND = 10;
 
 /* ================= STATE ================= */
 let FILES = [];
@@ -189,16 +209,6 @@ const pagination = document.getElementById("pagination");
 const playerBox = document.getElementById("playerBox");
 const videoInfo = document.getElementById("videoInfo");
 const player = document.getElementById("player");
-
-/* ================= ADS ================= */
-function triggerAd(){
-  const now = Date.now();
-  const last = localStorage.getItem("last_direct") || 0;
-  if(now - last >= AD_COOLDOWN){
-    localStorage.setItem("last_direct", now);
-    window.open(DIRECT_LINK, "_blank");
-  }
-}
 
 /* ================= ROUTER ================= */
 function handleRoute(){
@@ -214,27 +224,25 @@ function handleRoute(){
   playerBox.style.display = "block";
   videoInfo.style.display = "block";
 
-  document.getElementById("videoTitle").textContent = video.title || "Untitled";
-  document.getElementById("videoDuration").textContent = video.length || "–";
-  document.getElementById("videoViews").textContent = video.views || "–";
-  document.getElementById("videoDate").textContent = video.uploaded || "–";
+  videoTitle.textContent = video.title || "Untitled";
+  videoDuration.textContent = video.length || "–";
+  videoViews.textContent = video.views || "–";
+  videoDate.textContent = video.uploaded || "–";
 
   list.innerHTML = "";
-  shuffle([...FILES]).slice(0, STREAM_RECOMMEND).forEach(v=>renderCard(v,false));
+  shuffle([...FILES]).slice(0, STREAM_RECOMMEND)
+    .forEach(v=>renderCard(v));
 }
 
 /* ================= RENDER ================= */
-function renderCard(v, allowAd=true){
+function renderCard(v){
   const card = document.createElement("div");
   card.className = "card";
   card.innerHTML = `
     <div class="thumb">VIDEO</div>
     <p>${v.title || "Untitled Video"}</p>
   `;
-  card.onclick = ()=>{
-    if(allowAd) triggerAd();   // 🔥 IKLAN HANYA DI SINI
-    location.hash = `/e/${v.file_code}`;
-  };
+  card.onclick = ()=> location.hash = `/e/${v.file_code}`;
   list.appendChild(card);
 }
 
@@ -260,7 +268,7 @@ fetch(API).then(r=>r.json()).then(data=>{
   }else{
     const start=(PAGE-1)*HOME_PER_PAGE;
     FILES.slice(start,start+HOME_PER_PAGE)
-      .forEach(v=>renderCard(v,true));
+      .forEach(v=>renderCard(v));
 
     if(start+HOME_PER_PAGE<FILES.length){
       pagination.innerHTML=`<a href="?page=${PAGE+1}">Lihat video lainnya →</a>`;
